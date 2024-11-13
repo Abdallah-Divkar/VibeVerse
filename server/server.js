@@ -1,8 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const postRoutes = require('./routes/post');
+const commentRoutes = require('./routes/comment');
 
 const app = express();
+
+//Routes
+const postRoutes = require('./routes/post');
+const commentRoutes = require('./routes/comment');
 
 // Middleware
 app.use(bodyParser.json());
