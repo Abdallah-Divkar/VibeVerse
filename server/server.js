@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const postRoutes = require('./routes/post');
 const commentRoutes = require('./routes/comment');
+require("dotenv").config();
 
 const app = express();
 
