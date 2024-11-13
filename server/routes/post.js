@@ -1,9 +1,10 @@
 const express = require("express");
 const Post = require("../models/Post");
 const router = express.Router();
+const auth = require("../middleware/auth");
 
 //Creating a new post
-router.post("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {
     const { title, content, author } = req.body;
 
     try{
@@ -16,6 +17,24 @@ router.post("/", async (req, res) => {
     }
 });
 
+//Routes for liking a post
+router.post("/:id/like", auth, async (req, res) => {
+    try{
+        const post = await Post.findById(req.body.id);
+        if (!post) return res.status(404).json({ message: "Post not found" });
+
+        if (post.likes.includes(req.user)) {
+            return res.status(400).json({ message: "Post already liked" });
+        }
+
+        post.likes.push(req.user);
+        await post.save();
+        res.json({ message: "Post liked" });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+});
 //Update a post by id
 router.put('/:id', async (req, res) => {
     const { title, content } = req.body;
