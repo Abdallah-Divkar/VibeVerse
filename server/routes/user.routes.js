@@ -1,8 +1,7 @@
-import express from 'express';
-import userCtrl from '../controllers/user.controller.js';
-import authCtrl from '../controllers/auth.controller.js';
-
+/*const express = require('express');
 const router = express.Router();
+const userCtrl = require('../controllers/user.controller.js');
+const authCtrl = require('../controllers/auth.controller.js');
 
 router.route('/api/users')
     .get(userCtrl.list)
@@ -25,5 +24,5 @@ router.put('/api/users/unfollow/:userId', authCtrl.requireSignin, userCtrl.unfol
 
 router.param('userId', userCtrl.userByID);
 
-export default router;
+module.exports = router;*/
 

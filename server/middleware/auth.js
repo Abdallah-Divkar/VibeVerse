@@ -1,5 +1,14 @@
-const jwt = require("jsonwebtoken");
+/*const express = require('express');
+const authCtrl = require('../controllers/auth.controller');
 
-const authenticateToken = (req, res, next) => {};
+const router = express.Router();
 
-module.exports = authenticateToken;
+// Route to sign in a user
+router.route('/auth/signin')
+  .post(authCtrl.signin);
+
+// Route to sign out a user
+router.route('/auth/signout')
+  .get(authCtrl.signout);
+
+module.exports = router;*/

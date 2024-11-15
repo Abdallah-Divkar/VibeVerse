@@ -1,40 +1,39 @@
 const express = require("express");
 const router = express.Router();
 const Post = require("../models/Post");
-const auth = require("../middleware/auth");
+const auth = require("../controllers/auth.controller");
+const { requireSignin } = require("../controllers/auth.controller");
 
 //Creating a new post
-router.post("/", auth, async (req, res) => {
-    const { title, content, author } = req.body;
-
-    try{
-        const post = new Post({ title, content, author });
-        await post.save();
-        res.status(201).json(post);
+router.post("/", requireSignin, async (req, res) => {
+    const { title, content } = req.body;
+    try {
+      const post = new Post({ title, content, author: req.user._id });
+      await post.save();
+      res.status(201).json(post);
+    } catch (err) {
+      res.status(500).json({ message: "Server Error" });
     }
-    catch(err){
-        res.status(500).json({ message: "Server Error" });
-    }
-});
+  });
 
 //Routes for liking a post
-router.post("/:id/like", auth, async (req, res) => {
-    try{
-        const post = await Post.findById(req.body.id);
-        if (!post) return res.status(404).json({ message: "Post not found" });
-
-        if (post.likes.includes(req.user)) {
-            return res.status(400).json({ message: "Post already liked" });
-        }
-
-        post.likes.push(req.user);
-        await post.save();
-        res.json({ message: "Post liked" });
-    }
-    catch (err) {
-        res.status(500).json({ message: "Server Error" });
+router.post("/:id/like", requireSignin, async (req, res) => {
+    try {
+      const post = await Post.findById(req.params.id);  // Use req.params.id instead of req.body.id
+      if (!post) return res.status(404).json({ message: "Post not found" });
+  
+      if (post.likes.includes(req.user._id)) {  // Ensure req.user is the authenticated user's id
+        return res.status(400).json({ message: "Post already liked" });
+      }
+  
+      post.likes.push(req.user._id);  // Add the user's ID to the likes array
+      await post.save();
+      res.json({ message: "Post liked" });
+    } catch (err) {
+      res.status(500).json({ message: "Server Error" });
     }
 });
+
 //Update a post by id
 router.put('/:id', async (req, res) => {
     const { title, content } = req.body;

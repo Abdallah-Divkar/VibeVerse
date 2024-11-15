@@ -1,6 +1,5 @@
-// const mongoose = require('mongoose');
-import mongoose from 'mongoose';
-import crypto from 'crypto';
+/*const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const UserSchema = new mongoose.Schema({
     name: {
@@ -28,8 +27,8 @@ const UserSchema = new mongoose.Schema({
         required: 'Password is required'
     },
     salt: String,
-    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Lista de seguidores
-    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]  // Lista de usuarios seguidos
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // List of followers
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]  // List of followed users
 });
 
 UserSchema.virtual('password')
@@ -71,4 +70,4 @@ UserSchema.methods = {
     }
 };
 
-export default mongoose.model('User', UserSchema);
+module.exports = mongoose.model('User', UserSchema);*/
