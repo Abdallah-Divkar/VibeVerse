@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const cloudinary = require('../config/config').cloudinary; // Import Cloudinary config
+const Post = require('../models/post.model');
 const fs = require('fs'); // To handle file system (for multer)
 
 // Create user controller with Cloudinary integration
@@ -97,6 +98,33 @@ const read = async (req, res) => {
   }
 };
 
+// Get user profile
+const profile = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .populate('followers', '_id name')
+      .populate('following', '_id name')
+      .select('name email bio followers following created updated');
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.json({
+      name: user.name,
+      email: user.email,
+      bio: user.bio,
+      followers: user.followers.length,
+      following: user.following.length,
+      created: user.created,
+      updated: user.updated
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ error: "Could not fetch user profile" });
+  }
+};
+
 // List all users
 const list = async (req, res) => {
   try {
@@ -169,13 +197,28 @@ const unfollow = async (req, res) => {
     return res.status(400).json({ error: "Could not unfollow user" });
   }
 };
+// ger user posts profile
+const userPosts = async (req, res) => {
+  try {
+      let posts = await Post.find({ postedBy: req.params.userId })
+          .populate('postedBy', '_id name')
+          .sort('-created');
+      
+      res.json(posts);
+  } catch (err) {
+      console.error(err);
+      return res.status(400).json({ error: "Could not fetch user posts" });
+  }
+};
 
 // Export all functions at the end
 module.exports = {
+  userPosts,
   create,
   update,
   userByID,
   read,
+  profile,
   list,
   remove,
   follow,

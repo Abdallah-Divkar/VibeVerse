@@ -26,6 +26,11 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: 'Password is required'
     },
+    bio: { //important for profile
+        type: String,
+        trim: true,
+        maxlength: 500 //lenght
+    },
     salt: String,
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
