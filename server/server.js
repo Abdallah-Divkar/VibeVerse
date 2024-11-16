@@ -7,6 +7,8 @@ const userRoutes = require('./routes/user');
 const postRoutes = require('./routes/post');
 const commentRoutes = require('./routes/comment');
 const authRoutes = require('./routes/auth.routes');  
+const jwtSecret = process.env.JWT_SECRET;
+console.log(jwtSecret);  
 
 // Middleware to parse JSON
 app.use(express.json());
