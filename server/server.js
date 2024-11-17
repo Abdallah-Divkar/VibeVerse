@@ -1,71 +1,59 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+require('dotenv').config();
+const { expressjwt } = require('express-jwt');
 const mongoose = require('mongoose');
-const cloudinary = require('cloudinary').v2; // Require Cloudinary SDK
+const cors = require('cors');
+const app = express();
+const userRoutes = require('./routes/user');
 const postRoutes = require('./routes/post');
 const commentRoutes = require('./routes/comment');
-const multer = require('multer');  // Use multer for handling file uploads
-require("dotenv").config();
+const authRoutes = require('./routes/auth.routes');  
+const jwtSecret = process.env.JWT_SECRET;
+console.log(jwtSecret);  
 
-const app = express();
+// Middleware to parse JSON
+app.use(express.json());
+app.use(cors());
 
-// Middleware
-app.use(bodyParser.json());
+// JWT middleware
+app.use(expressjwt({
+    secret: process.env.JWT_SECRET, 
+    algorithms: ['HS256'],
+}).unless({
+    path: ['/api/auth', '/api/public'], // Public routes without authentication
+}));
 
-// Set up Cloudinary configuration
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, // Use your Cloudinary credentials from .env
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
-// Set up multer storage (if you're handling file uploads to Cloudinary from your backend)
-const storage = multer.memoryStorage(); // We will use memoryStorage to store images in memory temporarily
-const upload = multer({ storage: storage });
+// CORS configuration
+app.use(cors());  // Allow all origins or customize as needed
 
-// Connect to MongoDB (update with your actual connection string)
-mongoose.connect('mongodb://localhost/social-media-db', { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Could not connect to MongoDB", err));
+// MongoDB connection
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('MongoDB connected');
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);  // Exit process with failure
+  }
+};
 
-// Routes (you'll define these later)
-app.get('/', (req, res) => {
-  res.send('Welcome to the Social Media App');
-});
+// Connect to MongoDB
+connectDB();
 
-// Example route to handle image upload to Cloudinary
-app.post('/upload', upload.single('image'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).send('No file uploaded');
-        }
-
-        // Upload image to Cloudinary
-        const result = await cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
-            if (error) {
-                console.error('Cloudinary upload error:', error);
-                return res.status(500).send('Error uploading image');
-            }
-
-            // Respond with the uploaded image URL
-            res.json({ url: result.secure_url });
-        });
-
-        // Pipe the file buffer to Cloudinary's upload stream
-        result.end(req.file.buffer);
-
-    } catch (error) {
-        console.error('Error uploading image:', error);
-        res.status(500).send('Error uploading image');
-    }
-});
-
-// Routes for posts and comments (you'll define these later)
+// Use routes
+app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api', authRoutes); 
 
-// Server listening using the PORT from the .env file
-const port = process.env.PORT;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+// 404 handler for undefined routes
+app.use((req, res, next) => {
+  res.status(404).json({ error: 'Route not found' });
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
