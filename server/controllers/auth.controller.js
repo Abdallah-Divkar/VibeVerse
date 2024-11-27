@@ -17,7 +17,7 @@ const signin = async (req, res) => {
 
     const token = jwt.sign({ _id: user._id }, jwtSecret); 
     console.log("Generated Token:", token);
-    res.cookie('t', token);  // No expiry date
+    res.cookie('t', token), { expire: new Date() + 9999 };  // No expiry date
 
     return res.json({
       token,
