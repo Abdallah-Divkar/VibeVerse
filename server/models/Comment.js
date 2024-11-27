@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
 
-const CommentSchema = new mongoose.Schema({
-  post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
-  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  content: { type: String, required: true },
-}, { timestamps: true });
+const commentSchema = new mongoose.Schema({
+  text: { type: String, required: true },       // Use 'text' instead of 'content'
+  createAt: { type: Date, required: true }      // Use 'createAt' as per your JSON
+});
 
-module.exports = mongoose.model('Comment', CommentSchema);
+module.exports = mongoose.model('Comment', commentSchema);

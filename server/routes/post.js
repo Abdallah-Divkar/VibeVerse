@@ -1,5 +1,10 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+<<<<<<< HEAD
+const Post = require('../models/Post');
+
+// Ruta para eliminar un post por su ID
+=======
 const Post = require("../models/Post");
 const auth = require("../controllers/auth.controller");
 const { requireSignin } = require("../controllers/auth.controller");
@@ -101,19 +106,18 @@ router.delete('/', async (req, res) => {
 });
 
 // Delete a post by ID
+>>>>>>> bc1eee9fed92c3f787f7f1477873f8fef53d27d1
 router.delete('/:id', async (req, res) => {
-    try {
-        const post = await Post.findByIdAndDelete(req.params.id);
-        
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-
-        res.json({ message: 'Post deleted successfully' });
-    } 
-    catch (err) {
-        res.status(500).json({ message: 'Server error' });
+  try {
+    const post = await Post.findByIdAndDelete(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: 'Post deleted successfully' });
     }
+    res.status(200).json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 module.exports = router;
