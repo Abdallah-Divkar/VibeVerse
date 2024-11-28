@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const { expressjwt } = require('express-jwt');
 const config = require('../config/config.js');
 
+// Ensure process.env.JWT_SECRET and config.jwtSecret match
+const jwtSecret = process.env.JWT_SECRET || config.jwtSecret;
+
 // Signin function
 const signin = async (req, res) => {
   try {
@@ -12,8 +15,10 @@ const signin = async (req, res) => {
       return res.status(401).json({ error: "Incorrect password" });
     }
 
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    res.cookie('t', token, { expire: new Date(Date.now() + 86400000) });  // Expires in 1 day
+    const token = jwt.sign({ _id: user._id }, jwtSecret); 
+    console.log("Generated Token:", token);
+    res.cookie('t', token), { expire: new Date() + 9999 };  // No expiry date
+
     return res.json({
       token,
       user: {
@@ -35,7 +40,7 @@ const signout = (req, res) => {
 
 // Middleware to require sign-in (JWT verification)
 const requireSignin = expressjwt({
-  secret: config.jwtSecret,
+  secret: jwtSecret,
   algorithms: ["HS256"],
   userProperty: 'user'  // Attach decoded JWT payload to req.user
 });

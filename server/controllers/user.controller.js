@@ -1,7 +1,7 @@
 const User = require('../models/User');
-const cloudinary = require('../config/config').cloudinary; // Import Cloudinary config
-const Post = require('../models/post.model');
-const fs = require('fs'); // To handle file system (for multer)
+const cloudinary = require('../config/config').cloudinary; 
+const Post = require('../models/Post');
+const fs = require('fs'); 
 
 // Create user controller with Cloudinary integration
 const create = async (req, res) => {
@@ -11,12 +11,18 @@ const create = async (req, res) => {
     // Check if an image file is provided in the request
     if (req.file) {
       // Upload the file to Cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
+      const result = await cloudinary.uploader.upload_stream({
         folder: 'user_profiles', // Optionally specify a folder in Cloudinary
         public_id: `profile_pic_${Date.now()}` // Optionally set a custom public ID
+      }, (error, result) => {
+        if (error) {
+          return res.status(400).json({ error: "Error uploading to Cloudinary" });
+        }
+        profilePicUrl = result.secure_url; // Get the Cloudinary URL of the uploaded image
       });
 
-      profilePicUrl = result.secure_url; // Get the Cloudinary URL of the uploaded image
+      // Use the file buffer to upload directly to Cloudinary
+      req.file.stream.pipe(result);
     }
 
     // Create a new user with the profile picture URL if provided
@@ -36,6 +42,7 @@ const create = async (req, res) => {
     return res.status(400).json({ error: "Could not create user" });
   }
 };
+
 
 // Update user profile with optional image upload
 const update = async (req, res) => {
