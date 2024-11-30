@@ -1,38 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const userCtrl = require("../controllers/user.controller");
-const authCtrl = require("../controllers/auth.controller"); // Import auth controller
-const cloudinary = require("../config/config.js").cloudinary; // Import Cloudinary config
+const userCtrl = require("../controllers/user.controller"); // Import the user controller
 
-// Set storage engine to memory for easy upload to Cloudinary
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage }); // Initialize multer with memory storage
+// Test route to check if the controller is working
+router.get("/test", userCtrl.test);
 
-// Middleware to handle user retrieval by ID (for route params)
-router.param('userId', userCtrl.userByID);
+// Add more routes as needed (example: list all users)
+router.get("/", userCtrl.list);
 
-// User routes
-router.route('/')
-    .get(authCtrl.requireSignin, userCtrl.list) // Get all users (requires sign-in)
-    .post(upload.single('profilePic'), userCtrl.create); // Create a new user with profile picture upload
-
-// Update user route (requires sign-in and image upload if provided)
-router.put('/update', authCtrl.requireSignin, upload.single('profilePic'), userCtrl.update);
-
-// Individual user routes with authentication middleware
-router.route('/:userId')
-    .get(authCtrl.requireSignin, userCtrl.read) // Get user by ID with authentication
-    .put(authCtrl.requireSignin, authCtrl.hasAuthorization, upload.single('profilePic'), userCtrl.update) // Update user with profile picture
-    .delete(authCtrl.requireSignin, authCtrl.hasAuthorization, userCtrl.remove); // Delete user
-
-// Follow/Unfollow routes (requires sign-in)
-router.put('/follow/:userId', authCtrl.requireSignin, userCtrl.follow); // Follow user
-router.put('/unfollow/:userId', authCtrl.requireSignin, userCtrl.unfollow); // Unfollow user
-
-// obtain profile
-router.get('/api/users/profile/:userId', authCtrl.requireSignin, userCtrl.profile);
-
-// profile posts
-router.get('/api/users/:userId/posts', authCtrl.requireSignin, userCtrl.userPosts);
-module.exports = router; // Export the router with defined routes
+module.exports = router; // Export the router

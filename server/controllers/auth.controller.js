@@ -1,57 +1,122 @@
-const User = require('../models/User.js');
-const jwt = require('jsonwebtoken');
-const { expressjwt } = require('express-jwt');
-const config = require('../config/config.js');
+const User = require("../models/User");
 
-// Ensure process.env.JWT_SECRET and config.jwtSecret match
-const jwtSecret = process.env.JWT_SECRET || config.jwtSecret;
-
-// Signin function
-const signin = async (req, res) => {
+// Middleware: Retrieve user by ID
+exports.userByID = async (req, res, next, id) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) return res.status(404).json({ error: "User with that email does not exist" });
-    if (!user.authenticate(req.body.password)) {
-      return res.status(401).json({ error: "Incorrect password" });
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-
-    const token = jwt.sign({ _id: user._id }, jwtSecret); 
-    console.log("Generated Token:", token);
-    res.cookie('t', token);  // No expiry date
-
-    return res.json({
-      token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email
-      }
-    });
-  } catch (err) {
-    return res.status(500).json({ error: "Could not sign in" });
+    req.profile = user; // Attach user to the request
+    next();
+  } catch (error) {
+    return res.status(500).json({ error: "Could not retrieve user" });
   }
 };
 
-// Signout function
-const signout = (req, res) => {
-  res.clearCookie("t");
-  return res.status(200).json({ message: "Signed out successfully" });
-};
-
-// Middleware to require sign-in (JWT verification)
-const requireSignin = expressjwt({
-  secret: jwtSecret,
-  algorithms: ["HS256"],
-  userProperty: 'user'  // Attach decoded JWT payload to req.user
-});
-
-// Authorization check middleware
-const hasAuthorization = (req, res, next) => {
-  const authorized = req.profile && req.auth && req.profile._id == req.auth._id;
-  if (!authorized) {
-    return res.status(403).json({ error: "User is not authorized" });
+// List all users
+exports.list = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Could not fetch users" });
   }
-  next();
 };
 
-module.exports = { signin, signout, requireSignin, hasAuthorization };
+// Create a new user
+exports.create = async (req, res) => {
+  try {
+    const user = new User(req.body);
+    if (req.file) {
+      // Upload profile picture to Cloudinary
+      const result = await cloudinary.uploader.upload_stream({
+        resource_type: "image",
+      });
+      user.profilePic = result.secure_url;
+    }
+    await user.save();
+    res.status(201).json({ message: "User created successfully", user });
+  } catch (error) {
+    res.status(500).json({ error: "Could not create user" });
+  }
+};
+
+// Read user details
+exports.read = (req, res) => {
+  req.profile.password = undefined; // Exclude sensitive information
+  res.json(req.profile);
+};
+
+// Update user
+exports.update = async (req, res) => {
+  try {
+    let user = req.profile;
+    Object.assign(user, req.body); // Merge request body into user object
+    if (req.file) {
+      const result = await cloudinary.uploader.upload_stream({
+        resource_type: "image",
+      });
+      user.profilePic = result.secure_url;
+    }
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Could not update user" });
+  }
+};
+
+// Delete user
+exports.remove = async (req, res) => {
+  try {
+    const user = req.profile;
+    await user.remove();
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Could not delete user" });
+  }
+};
+
+// Follow another user
+exports.follow = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.body.userId,
+      { $addToSet: { following: req.params.userId } },
+      { new: true }
+    );
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Could not follow user" });
+  }
+};
+
+// Unfollow a user
+exports.unfollow = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.body.userId,
+      { $pull: { following: req.params.userId } },
+      { new: true }
+    );
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Could not unfollow user" });
+  }
+};
+
+// Get user posts
+exports.userPosts = async (req, res) => {
+  try {
+    const posts = await Post.find({ postedBy: req.params.userId }); // Assuming a Post model
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: "Could not fetch user posts" });
+  }
+};
+
+// Get user profile
+exports.profile = (req, res) => {
+  req.profile.password = undefined;
+  res.json(req.profile);
+};
