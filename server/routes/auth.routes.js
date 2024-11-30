@@ -9,3 +9,6 @@ router.post('/auth/signin', authCtrl.signin);
 router.post('/auth/signout', authCtrl.signout);
 
 module.exports = router;  // Export the router with defined routes
+
+
+
