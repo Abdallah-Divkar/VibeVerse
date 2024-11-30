@@ -1,17 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const userCtrl = require("../controllers/user.controller");
-const authCtrl = require("../controllers/auth.controller"); // Import auth controller
-const cloudinary = require("../config/config.js").cloudinary; // Import Cloudinary config
+const userCtrl = require("../controllers/user.controller"); // Import the user controller
 
-// Set storage engine to memory for easy upload to Cloudinary
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage }); // Initialize multer with memory storage
+// Test route to check if the controller is working
+router.get("/test", userCtrl.test);
 
-// Middleware to handle user retrieval by ID (for route params)
-router.param('userId', userCtrl.userByID);
+// Add more routes as needed (example: list all users)
+router.get("/", userCtrl.list);
 
+<<<<<<< HEAD
+module.exports = router; // Export the router
+=======
 // User routes
 router.route('/')
     .get(authCtrl.requireSignin, userCtrl.list) // Get all users (requires sign-in)
@@ -40,3 +39,4 @@ router.get('/api/users/:userId/posts', authCtrl.requireSignin, userCtrl.userPost
 router.delete('/posts/:postId', authCtrl.requireSignin, authCtrl.canDeletePost, userCtrl.deletePost); // Delete a post (requires sign-in and authorization)
 
 module.exports = router; // Export the router with defined routes
+>>>>>>> 546ab6ccb475ab7290a2299402ec25af48562329
