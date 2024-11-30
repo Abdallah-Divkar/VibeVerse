@@ -1,31 +1,23 @@
 const User = require('../models/User');
-const cloudinary = require('../config/config').cloudinary; 
+const cloudinary = require('../config/config').cloudinary;
 const Post = require('../models/Post');
-const fs = require('fs'); 
+const fs = require('fs');
 
-// Create user controller with Cloudinary integration
+// Create a user with Cloudinary integration
 const create = async (req, res) => {
   try {
-    let profilePicUrl = req.body.profilePic || ''; // Default to empty string if no profilePic provided
+    let profilePicUrl = req.body.profilePic || ''; // Default to an empty string if no profile picture is provided
 
     // Check if an image file is provided in the request
     if (req.file) {
-      // Upload the file to Cloudinary
-      const result = await cloudinary.uploader.upload_stream({
-        folder: 'user_profiles', // Optionally specify a folder in Cloudinary
-        public_id: `profile_pic_${Date.now()}` // Optionally set a custom public ID
-      }, (error, result) => {
-        if (error) {
-          return res.status(400).json({ error: "Error uploading to Cloudinary" });
-        }
-        profilePicUrl = result.secure_url; // Get the Cloudinary URL of the uploaded image
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'user_profiles', // Optional: Specify a folder in Cloudinary
+        public_id: `profile_pic_${Date.now()}` // Optional: Set a custom public ID
       });
-
-      // Use the file buffer to upload directly to Cloudinary
-      req.file.stream.pipe(result);
+      profilePicUrl = result.secure_url; // Get the Cloudinary URL of the uploaded image
     }
 
-    // Create a new user with the profile picture URL if provided
+    // Create a new user with the provided profile picture URL
     const user = new User({
       name: req.body.name,
       email: req.body.email,
@@ -33,9 +25,8 @@ const create = async (req, res) => {
       profilePic: profilePicUrl // Store the Cloudinary URL in the profilePic field
     });
 
-    // Save user to the database
+    // Save the user to the database
     await user.save();
-
     return res.json({ user });
   } catch (err) {
     console.error(err);
@@ -43,22 +34,18 @@ const create = async (req, res) => {
   }
 };
 
-
-// Update user profile with optional image upload
+// Update a user's profile with optional image upload
 const update = async (req, res) => {
   try {
-    let profilePicUrl = req.body.profilePic || req.user.profilePic; // Default to existing profilePic if not updated
+    let profilePicUrl = req.body.profilePic || req.user.profilePic; // Default to the existing profile picture if not updated
 
     // Check if a new profile picture is uploaded
     if (req.file) {
-      // Upload the new image to Cloudinary
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'user_profiles', // Specify a folder in Cloudinary
-        public_id: `profile_pic_${req.user._id}` // Optionally set a custom public ID for the user
+        public_id: `profile_pic_${req.user._id}` // Optional: Set a custom public ID for the user
       });
-
-      // Use the Cloudinary URL of the uploaded image
-      profilePicUrl = result.secure_url;
+      profilePicUrl = result.secure_url; // Get the Cloudinary URL of the uploaded image
     }
 
     // Update the user's information, including the new profile picture URL
@@ -75,29 +62,23 @@ const update = async (req, res) => {
   }
 };
 
+// Get user by ID middleware
 const userByID = async (req, res, next, id) => {
   try {
-      let user = await User.findById(id);
-      if (!user)
-          return res.status('400').json({
-              error: "User not found"
-          });
-      req.profile = user;
-      next();
+    const user = await User.findById(id);
+    if (!user) return res.status(400).json({ error: "User not found" });
+    req.profile = user; // Attach the user to the request object
+    next();
   } catch (err) {
-      return res.status('400').json({
-          error: "Could not retrieve user"
-      });
+    return res.status(400).json({ error: "Could not retrieve user" });
   }
 };
 
-// Get user by ID
+// Get a user by ID
 const read = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
     return res.json(user);
   } catch (err) {
     console.error(err);
@@ -105,7 +86,7 @@ const read = async (req, res) => {
   }
 };
 
-// Get user profile
+// Get a user's profile
 const profile = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
@@ -113,9 +94,7 @@ const profile = async (req, res) => {
       .populate('following', '_id name')
       .select('name email bio followers following created updated');
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     return res.json({
       name: user.name,
@@ -132,24 +111,11 @@ const profile = async (req, res) => {
   }
 };
 
-// List all users
-const list = async (req, res) => {
-  try {
-    const users = await User.find();
-    return res.json(users);
-  } catch (err) {
-    console.error(err);
-    return res.status(400).json({ error: "Could not retrieve users" });
-  }
-};
-
-// Delete user
+// Delete a user
 const remove = async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.userId);
-    if (!deletedUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!deletedUser) return res.status(404).json({ error: "User not found" });
     return res.json({ message: "User deleted successfully" });
   } catch (err) {
     console.error(err);
@@ -157,77 +123,37 @@ const remove = async (req, res) => {
   }
 };
 
-// Follow user
-const follow = async (req, res) => {
+// Delete a post with authorization
+const deletePost = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    const followUser = await User.findById(req.params.userId);
+    const postId = req.params.postId;
 
-    if (!followUser) {
-      return res.status(404).json({ error: "User to follow not found" });
+    // Find the post by ID
+    const post = await Post.findById(postId);
+
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Check if the requesting user is the owner of the post
+    if (post.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Unauthorized to delete this post" });
     }
 
-    // Add follower to the followee's followers list
-    followUser.followers.push(user._id);
-    user.following.push(followUser._id);
-
-    await user.save();
-    await followUser.save();
-
-    return res.json({ message: "User followed successfully" });
+    // Remove the post
+    await post.remove();
+    return res.json({ message: "Post deleted successfully" });
   } catch (err) {
     console.error(err);
-    return res.status(400).json({ error: "Could not follow user" });
+    return res.status(400).json({ error: "Could not delete post" });
   }
 };
 
-// Unfollow user
-const unfollow = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    const unfollowUser = await User.findById(req.params.userId);
-
-    if (!unfollowUser) {
-      return res.status(404).json({ error: "User to unfollow not found" });
-    }
-
-    // Remove follower from the followee's followers list
-    unfollowUser.followers.pull(user._id);
-    user.following.pull(unfollowUser._id);
-
-    await user.save();
-    await unfollowUser.save();
-
-    return res.json({ message: "User unfollowed successfully" });
-  } catch (err) {
-    console.error(err);
-    return res.status(400).json({ error: "Could not unfollow user" });
-  }
-};
-// ger user posts profile
-const userPosts = async (req, res) => {
-  try {
-      let posts = await Post.find({ postedBy: req.params.userId })
-          .populate('postedBy', '_id name')
-          .sort('-created');
-      
-      res.json(posts);
-  } catch (err) {
-      console.error(err);
-      return res.status(400).json({ error: "Could not fetch user posts" });
-  }
-};
-
-// Export all functions at the end
+// Export all functions
 module.exports = {
-  userPosts,
   create,
   update,
   userByID,
   read,
   profile,
-  list,
   remove,
-  follow,
-  unfollow
+  deletePost
 };

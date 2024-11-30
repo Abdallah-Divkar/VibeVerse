@@ -30,9 +30,13 @@ router.route('/:userId')
 router.put('/follow/:userId', authCtrl.requireSignin, userCtrl.follow); // Follow user
 router.put('/unfollow/:userId', authCtrl.requireSignin, userCtrl.unfollow); // Unfollow user
 
-// obtain profile
+// Obtain profile
 router.get('/api/users/profile/:userId', authCtrl.requireSignin, userCtrl.profile);
 
-// profile posts
+// Profile posts
 router.get('/api/users/:userId/posts', authCtrl.requireSignin, userCtrl.userPosts);
+
+// Delete post route
+router.delete('/posts/:postId', authCtrl.requireSignin, authCtrl.canDeletePost, userCtrl.deletePost); // Delete a post (requires sign-in and authorization)
+
 module.exports = router; // Export the router with defined routes

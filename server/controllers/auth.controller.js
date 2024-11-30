@@ -11,14 +11,20 @@ const signin = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(404).json({ error: "User with that email does not exist" });
+    
+    // Check password
     if (!user.authenticate(req.body.password)) {
       return res.status(401).json({ error: "Incorrect password" });
     }
 
-    const token = jwt.sign({ _id: user._id }, jwtSecret); 
+    // Generate JWT token
+    const token = jwt.sign({ _id: user._id }, jwtSecret, { expiresIn: '1d' }); // Token expires in 1 day
     console.log("Generated Token:", token);
-    res.cookie('t', token), { expire: new Date() + 9999 };  // No expiry date
 
+    // Set cookie with the token
+    res.cookie('t', token, { expire: new Date() + 9999 });
+
+    // Return token and user details
     return res.json({
       token,
       user: {
@@ -28,6 +34,7 @@ const signin = async (req, res) => {
       }
     });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: "Could not sign in" });
   }
 };
@@ -42,7 +49,7 @@ const signout = (req, res) => {
 const requireSignin = expressjwt({
   secret: jwtSecret,
   algorithms: ["HS256"],
-  userProperty: 'user'  // Attach decoded JWT payload to req.user
+  userProperty: 'user' // Attach decoded JWT payload to req.user
 });
 
 // Authorization check middleware
@@ -54,4 +61,23 @@ const hasAuthorization = (req, res, next) => {
   next();
 };
 
-module.exports = { signin, signout, requireSignin, hasAuthorization };
+// Middleware to ensure only authenticated users can delete posts
+const canDeletePost = async (req, res, next) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Check if the user is the owner of the post
+    if (post.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Unauthorized to delete this post" });
+    }
+
+    next(); // User is authorized to delete the post
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "An error occurred while verifying post ownership" });
+  }
+};
+
+module.exports = { signin, signout, requireSignin, hasAuthorization, canDeletePost };
