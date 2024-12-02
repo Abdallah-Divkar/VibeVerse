@@ -1,35 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from "react";
+import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
+//import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { SignUp, SignIn, useAuth } from "@clerk/clerk-react";
+import Landing from "./components/Landing";
+//import Home from "./components/Home";
+import Dashboard from "./components/Dashboard";
+import Navbar from "./components/Navbar";
+//import SignUp from "./components/SignUp";
+//import SignIn from "./components/SignIn";
 
-function App() {
-  const [count, setCount] = useState(0)
+const PrivateRoute = ({ element }) => {
+  const { isSignedIn } = useAuth();
+  const navigate = useNavigate();
 
+  if (!isSignedIn) {
+    // If user is not signed in, redirect to sign-in page
+    navigate("/signin");
+    return null;
+  }
+
+  // Return the element if the user is signed in
+  return element;
+};
+
+const App = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Router>
+      <Navbar />
+      <Routes>
+        {/* Landing Page */}
+        <Route path="/" element={<Landing />} />
 
-export default App
+        {/* SignUp Page */}
+        <Route path="/signup" element={<SignUp />} />
+
+        {/* SignIn Page */}
+        <Route path="/signin" element={<SignIn />} />
+
+        {/* Private Dashboard Page */}
+        <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+      </Routes>
+    </Router>
+  );
+};
+
+export default App;

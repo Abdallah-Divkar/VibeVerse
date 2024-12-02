@@ -8,9 +8,7 @@ router.get("/test", userCtrl.test);
 // Add more routes as needed (example: list all users)
 router.get("/", userCtrl.list);
 
-<<<<<<< HEAD
 module.exports = router; // Export the router
-=======
 // User routes
 router.route('/')
     .get(authCtrl.requireSignin, userCtrl.list) // Get all users (requires sign-in)
@@ -39,4 +37,3 @@ router.get('/api/users/:userId/posts', authCtrl.requireSignin, userCtrl.userPost
 router.delete('/posts/:postId', authCtrl.requireSignin, authCtrl.canDeletePost, userCtrl.deletePost); // Delete a post (requires sign-in and authorization)
 
 module.exports = router; // Export the router with defined routes
->>>>>>> 546ab6ccb475ab7290a2299402ec25af48562329

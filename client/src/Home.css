@@ -1,0 +1,205 @@
+/* Main Container */
+.home-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #d9d9d9;
+}
+
+/* Left Section - Image Preview */
+.image-preview {
+  position: relative;
+  margin-right: 40px;
+}
+
+.phone-mockup {
+  position: absolute;
+}
+
+.phone-mockup:first-child {
+  top: 20px;
+  left: 20px;
+  z-index: 1;
+}
+
+.phone-mockup:last-child {
+  top: 0;
+  left: 0;
+}
+
+.phone-image {
+  height: 500px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Right Section - Login Section */
+.login-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-box {
+  background-color: white;
+  padding: 20px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  width: 100%;
+  max-width: 350px;
+}
+
+.app-name {
+  font-family: "Arial", sans-serif;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: black;
+}
+
+/* Clerk Components Styling */
+.clerk-sign-in {
+  width: 100%;
+  max-width: 350px;
+}
+
+.clerk-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.clerk-form input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  font-size: 0.9rem;
+}
+
+.clerk-form input:focus {
+  outline: none;
+  border-color: #aaa;
+}
+
+.clerk-form button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  background-color: #0095f6;
+}
+
+.clerk-form button:hover {
+  background-color: #007acc;
+}
+
+/* Divider */
+.divider {
+  margin: 15px 0;
+  font-size: 0.9rem;
+  color: #aaa;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  display: block;
+  width: 45%;
+  height: 1px;
+  background-color: #ddd;
+  position: absolute;
+  top: 50%;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+/* Links */
+.forgot-password {
+  font-size: 0.8rem;
+  color: #0095f6;
+  margin-top: 10px;
+  display: inline-block;
+}
+
+.signup-box {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 10px;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.signup-box a {
+  color: #0095f6;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.signup-box a:hover {
+  text-decoration: underline;
+}
+
+/* App Store Links */
+.get-app {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.app-links {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.app-store-image {
+  height: 40px;
+  margin: 0 5px;
+}
+
+/* Clerk-Specific Enhancements */
+.clerk-sign-in .clerk-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: black;
+  margin-bottom: 15px;
+}
+
+.clerk-sign-in .clerk-form button {
+  background-color: #0095f6;
+}
+
+.clerk-sign-in .clerk-form button:hover {
+  background-color: #007acc;
+}
+
+.clerk-sign-in .clerk-form .clerk-alternative {
+  font-size: 0.9rem;
+  margin: 15px 0;
+  color: #aaa;
+}
+
+.clerk-sign-in .clerk-social-buttons button {
+  background-color: #4267b2;
+  color: white;
+  font-size: 1rem;
+  margin-top: 10px;
+}
+
+.clerk-sign-in .clerk-social-buttons button:hover {
+  background-color: #365899;
+}
