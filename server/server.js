@@ -5,6 +5,7 @@ require("dotenv").config();
 const userRoutes = require("./routes/user");
 const postRoutes = require("./routes/post");
 const authRoutes = require("./routes/auth.routes");
+const cmtRoutes = require("./routes/comment");
 
 const app = express();
 const PORT = 5000;
@@ -27,6 +28,7 @@ mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
 // Routes
 app.use("/api/users", userRoutes); 
 app.use("/api/posts", postRoutes);
+app.use("/api/comments", cmtRoutes);
 app.use('/api', authRoutes);
 
 
