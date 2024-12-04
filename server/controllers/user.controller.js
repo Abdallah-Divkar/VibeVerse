@@ -1,25 +1,70 @@
-<<<<<<< HEAD
-// Test controller function
-exports.test = (req, res) => {
-  res.send("User controller is working!");
-};
-
-// Example function to list all users (mock data)
-exports.list = (req, res) => {
-  const mockUsers = [
-    { id: 1, name: "User One", email: "userone@example.com" },
-    { id: 2, name: "User Two", email: "usertwo@example.com" },
-  ];
-  res.json(mockUsers); // Send the mock data as a JSON response
-};
-=======
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/config').cloudinary;
 const Post = require('../models/Post');
 const fs = require('fs');
+const mongoose = require('mongoose');
+const { ObjectId } = require('mongoose').Types;
 
 // Create a user with Cloudinary integration
 const create = async (req, res) => {
+  try {
+    console.log('Request Body:', req.body); // Log the incoming data to debug
+
+    const { name, username, email, password, profilePic } = req.body;
+
+    // Check for missing fields
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
+
+    let profilePicUrl = profilePic || ''; // Default to an empty string if no profile picture is provided
+
+    // Handle file upload (if any)
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'user_profiles',
+        public_id: `profile_pic_${Date.now()}` // Optional: Set a custom public ID
+      });
+      profilePicUrl = result.secure_url; // Set the Cloudinary image URL
+    }
+
+    // Encrypt password before saving the user
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the user in the database
+    const user = new User({
+      name,
+      username,
+      email,
+      password: hashedPassword,
+      profilePic: profilePicUrl
+    });
+
+    await user.save();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, username: user.username, email: user.email }, // Payload
+      process.env.JWT_SECRET, // Secret key from environment variable
+      { expiresIn: '3d' } // Token expiration time
+    );
+
+    // Send response with the token
+    return res.json({
+      message: 'User created successfully',
+      user,
+      token
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ error: "Could not create user" });
+  }
+};
+
+
+/*const create = async (req, res) => {
   try {
     let profilePicUrl = req.body.profilePic || ''; // Default to an empty string if no profile picture is provided
 
@@ -34,7 +79,7 @@ const create = async (req, res) => {
 
     // Create a new user with the provided profile picture URL
     const user = new User({
-      name: req.body.name,
+      userName: req.body.username,
       email: req.body.email,
       password: req.body.password,
       profilePic: profilePicUrl // Store the Cloudinary URL in the profilePic field
@@ -47,35 +92,54 @@ const create = async (req, res) => {
     console.error(err);
     return res.status(400).json({ error: "Could not create user" });
   }
-};
+};*/
 
 // Update a user's profile with optional image upload
 const update = async (req, res) => {
   try {
-    let profilePicUrl = req.body.profilePic || req.user.profilePic; // Default to the existing profile picture if not updated
-
-    // Check if a new profile picture is uploaded
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'user_profiles', // Specify a folder in Cloudinary
-        public_id: `profile_pic_${req.user._id}` // Optional: Set a custom public ID for the user
-      });
-      profilePicUrl = result.secure_url; // Get the Cloudinary URL of the uploaded image
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // Update the user's information, including the new profile picture URL
+    const { userId } = req.params;
+    
+    // Check if the user is updating their own profile
+    if (req.user._id.toString() !== userId) {
+      return res.status(403).json({ error: 'You can only update your own profile' });
+    }
+
+    // Continue with your update logic
+    let profilePicUrl = req.body.profilePic || req.user.profilePic;
+
+    if (req.file) {
+      if (req.user.profilePic) {
+        const publicId = req.user.profilePic.split('/').pop().split('.')[0];
+        await cloudinary.uploader.destroy(publicId);
+      }
+
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'user_profiles',
+        public_id: `profile_pic_${userId}`,
+      });
+
+      profilePicUrl = result.secure_url;
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
+      userId, 
       { ...req.body, profilePic: profilePicUrl },
-      { new: true } // Ensure the updated user is returned
+      { new: true }
     );
 
-    return res.json(updatedUser);
+    return res.status(200).json(updatedUser);
   } catch (err) {
     console.error(err);
-    return res.status(400).json({ error: "Could not update user" });
+    return res.status(400).json({ error: "Could not update user", details: err.message });
   }
 };
+
+
+
 
 // Get user by ID middleware
 const userByID = async (req, res, next, id) => {
@@ -92,75 +156,188 @@ const userByID = async (req, res, next, id) => {
 // Get a user by ID
 const read = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-    return res.json(user);
+    const { userId } = req.params;
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "Invalid User ID format" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.status(200).json(user);
   } catch (err) {
-    console.error(err);
-    return res.status(400).json({ error: "Could not retrieve user" });
+    console.error("Error retrieving user:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
-// Get a user's profile
+
+// Get user's profile by ID or username
 const profile = async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId)
-      .populate('followers', '_id name')
-      .populate('following', '_id name')
-      .select('name email bio followers following created updated');
+    const { userId, username } = req.params;
 
-    if (!user) return res.status(404).json({ error: "User not found" });
+    let user;
+    if (userId) {
+      // Find user by ID
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ error: "Invalid User ID format" });
+      }
+      user = await User.findById(userId);
+    } else if (username) {
+      // Find user by username
+      user = await User.findOne({ username });
+    }
 
-    return res.json({
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Return profile with follower/following counts
+    return res.status(200).json({
       name: user.name,
       email: user.email,
       bio: user.bio,
       followers: user.followers.length,
       following: user.following.length,
       created: user.created,
-      updated: user.updated
+      updated: user.updated,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(400).json({ error: "Could not fetch user profile" });
+    console.error("Error fetching user profile:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
-// Delete a user
-const remove = async (req, res) => {
+
+
+// Get all posts by a specific user
+const userPosts = async (req, res) => {
   try {
-    const deletedUser = await User.findByIdAndDelete(req.params.userId);
-    if (!deletedUser) return res.status(404).json({ error: "User not found" });
+    const posts = await Post.find({ createdBy: req.params.userId })
+      .populate('createdBy', '_id name')
+      .sort({ createdAt: -1 }); // Sort by most recent posts
+
+    if (!posts || posts.length === 0) {
+      return res.status(404).json({ error: "No posts found for this user" });
+    }
+
+    return res.json(posts);
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ error: "Could not retrieve user's posts" });
+  }
+};
+
+
+// Delete a user
+remove = async (req, res) => {
+  try {
+    // Get user ID from request parameters
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if the logged-in user is authorized to delete this user
+    if (user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: "Unauthorized to delete this user" });
+    }
+
+    // Delete the user from the database
+    await user.remove();
+
     return res.json({ message: "User deleted successfully" });
   } catch (err) {
     console.error(err);
-    return res.status(400).json({ error: "Could not delete user" });
+    return res.status(500).json({ error: "An error occurred during deletion" });
   }
 };
 
-// Delete a post with authorization
-const deletePost = async (req, res) => {
+// List all users (used in the route "/")
+const list = async (req, res) => {
   try {
-    const postId = req.params.postId;
-
-    // Find the post by ID
-    const post = await Post.findById(postId);
-
-    if (!post) return res.status(404).json({ error: "Post not found" });
-
-    // Check if the requesting user is the owner of the post
-    if (post.postedBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: "Unauthorized to delete this post" });
-    }
-
-    // Remove the post
-    await post.remove();
-    return res.json({ message: "Post deleted successfully" });
+    const users = await User.find(); // Fetch all users from the database
+    return res.json(users); // Send the list of users as the response
   } catch (err) {
     console.error(err);
-    return res.status(400).json({ error: "Could not delete post" });
+    return res.status(400).json({ error: "Could not fetch users" });
   }
 };
+
+// Follow user
+const follow = async (req, res) => {
+  try {
+    const { userId, username } = req.params;
+    const currentUser = req.user._id; // Assume req.user is populated after authentication
+
+    let userToFollow;
+
+    // Validate and fetch user
+    if (userId) {
+      if (!ObjectId.isValid(userId)) {
+        return res.status(400).json({ error: "Invalid userId" });
+      }
+      userToFollow = await User.findById(userId);
+    } else {
+      userToFollow = await User.findOne({ username });
+    }
+
+    if (!userToFollow) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (userToFollow.followers.includes(currentUser)) {
+      return res.status(400).json({ message: "Already following this user" });
+    }
+
+    userToFollow.followers.push(currentUser);
+    await userToFollow.save();
+
+    const currentUserObj = await User.findById(currentUser);
+    currentUserObj.following.push(userToFollow._id);
+    await currentUserObj.save();
+
+    return res.status(200).json({ message: "Followed successfully", user: userToFollow });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Could not follow user" });
+  }
+};
+
+
+// Unfollow user
+const unfollow = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUser = req.user._id; // Assume req.user is populated after authentication
+
+    // Check if the user exists
+    const userToUnfollow = await User.findById(userId);
+    if (!userToUnfollow) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Remove the follower and update the following list
+    userToUnfollow.followers.pull(currentUser);
+    await userToUnfollow.save();
+
+    const currentUserObj = await User.findById(currentUser);
+    currentUserObj.following.pull(userId);
+    await currentUserObj.save();
+
+    return res.status(200).json({ message: "Unfollowed successfully", user: userToUnfollow });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Could not unfollow user" });
+  }
+};
+
 
 // Export all functions
 module.exports = {
@@ -169,7 +346,9 @@ module.exports = {
   userByID,
   read,
   profile,
+  userPosts,
   remove,
-  deletePost
+  list,
+  follow,
+  unfollow
 };
->>>>>>> 546ab6ccb475ab7290a2299402ec25af48562329

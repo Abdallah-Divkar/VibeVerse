@@ -1,19 +1,40 @@
 const express = require('express');
 const router = express.Router();
-const Post = require('../models/Post');
+const Post = require("../models/Post");
+const upload = require("../middleware/upload");
+const { requireSignin, canDeletePost } = require('../controllers/auth.controller');
+const { createPost, deletePost, getPost, getAllPosts } = require('../controllers/post.controller');
 
-// Ruta para eliminar un post por su ID
-router.delete('/:id', async (req, res) => {
+// Create a post with a required photo
+router.post('/posts', upload.single('photo'), async (req, res) => {
   try {
-    const post = await Post.findByIdAndDelete(req.params.id);
-    if (!post) {
-      return res.status(404).json({ message: 'Post deleted successfully' });
+    const { content } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Photo is required to create a post' });
     }
-    res.status(200).json({ message: 'Post deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting post:', error);
-    res.status(500).json({ message: 'Server error' });
+
+    const photo = req.file.path; // File path of the uploaded image
+
+    const newPost = new Post({
+      content,
+      photo, // Save the photo URL
+    });
+
+    await newPost.save();
+    res.status(201).json({ success: true, post: newPost });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error creating post', error: err.message });
   }
 });
+
+// Route to get all posts
+router.get('/', getAllPosts);
+
+// Route to get a specific post by ID
+router.get('/:postId', getPost);
+
+// Route to delete a post by ID
+router.delete('/:postId', requireSignin, canDeletePost, deletePost);
 
 module.exports = router;

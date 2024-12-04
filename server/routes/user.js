@@ -1,39 +1,74 @@
 const express = require("express");
+const { requireSignin } = require("../controllers/auth.controller");
+const { createPost, deletePost } = require("../controllers/post.controller");
 const router = express.Router();
-const userCtrl = require("../controllers/user.controller"); // Import the user controller
+const userCtrl = require("../controllers/user.controller");
+const authCtrl = require("../controllers/auth.controller");
+const postCtrl = require("../controllers/post.controller");
+const upload = require("../middleware/upload");
+const cloudinary = require('../config/config').cloudinary;
+const User = require('../models/User');
+const Post = require('../models/Post');
+const fs = require('fs');
 
-// Test route to check if the controller is working
-router.get("/test", userCtrl.test);
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-// Add more routes as needed (example: list all users)
-router.get("/", userCtrl.list);
+// Use requireSignin for protected routes
+router.post('/create', requireSignin, createPost);
+//router.delete('/delete/:postId', requireSignin, authCtrl.canDeletePost, deletePost); // Corrected route to use post.controller.js deletePost
 
-module.exports = router; // Export the router
-// User routes
-router.route('/')
-    .get(authCtrl.requireSignin, userCtrl.list) // Get all users (requires sign-in)
-    .post(upload.single('profilePic'), userCtrl.create); // Create a new user with profile picture upload
+// Test route
+//router.get("/test", userCtrl.test);
+router.post("/", upload.single("profilePic"), userCtrl.create);
+// General User Routes
+router
+  .route("/")
+  .get(authCtrl.requireSignin, userCtrl.list) // List all users (requires sign-in)
+  .post(upload.single("profilePic"), userCtrl.create); // Create a user with optional profile picture upload
 
-// Update user route (requires sign-in and image upload if provided)
-router.put('/update', authCtrl.requireSignin, upload.single('profilePic'), userCtrl.update);
+// Update user
+router.put("/update/:userId", authCtrl.requireSignin, upload.single("profilePic"), userCtrl.update);
 
-// Individual user routes with authentication middleware
-router.route('/:userId')
-    .get(authCtrl.requireSignin, userCtrl.read) // Get user by ID with authentication
-    .put(authCtrl.requireSignin, authCtrl.hasAuthorization, upload.single('profilePic'), userCtrl.update) // Update user with profile picture
-    .delete(authCtrl.requireSignin, authCtrl.hasAuthorization, userCtrl.remove); // Delete user
+// Routes for specific user actions
+router
+  .route("/:userId")
+  .get(authCtrl.requireSignin, userCtrl.read) // Get user details
+  .put(authCtrl.requireSignin, authCtrl.hasAuthorization, upload.single("profilePic"), userCtrl.update) // Update user
+  .delete(authCtrl.requireSignin, authCtrl.hasAuthorization, userCtrl.remove); // Delete user
 
-// Follow/Unfollow routes (requires sign-in)
-router.put('/follow/:userId', authCtrl.requireSignin, userCtrl.follow); // Follow user
-router.put('/unfollow/:userId', authCtrl.requireSignin, userCtrl.unfollow); // Unfollow user
+// Route for uploading a profile picture
+router.post('/uploadProfilePic', upload.single('profilePic'), async (req, res) => {
+  try {
+    // Upload image to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path);
 
-// Obtain profile
-router.get('/api/users/profile/:userId', authCtrl.requireSignin, userCtrl.profile);
+    // Update user profile with the Cloudinary image URL
+    const user = await User.findByIdAndUpdate(req.user.id, { profilePic: result.secure_url }, { new: true });
 
-// Profile posts
-router.get('/api/users/:userId/posts', authCtrl.requireSignin, userCtrl.userPosts);
+    res.status(200).json({ message: 'Profile picture uploaded successfully', user });
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    res.status(500).json({ message: 'Error uploading image', error });
+  }
+});
 
-// Delete post route
-router.delete('/posts/:postId', authCtrl.requireSignin, authCtrl.canDeletePost, userCtrl.deletePost); // Delete a post (requires sign-in and authorization)
+// Follow/Unfollow routes
+router.put("/follow/:userId", authCtrl.requireSignin, userCtrl.follow); // Follow by userId
+router.put("/follow/username/:username", authCtrl.requireSignin, userCtrl.follow); // Follow by username
+router.put("/unfollow/:userId", authCtrl.requireSignin, userCtrl.unfollow); // Unfollow by userId
+router.put("/unfollow/username/:username", authCtrl.requireSignin, userCtrl.unfollow); // Unfollow by username
 
-module.exports = router; // Export the router with defined routes
+// Profile and Posts
+router.get("/profile/:userId", authCtrl.requireSignin, userCtrl.profile); // Fetch user profile
+router.get("/profile/:username", authCtrl.requireSignin, userCtrl.profile); // Fetch user profile
+router.get("/:userId/posts", authCtrl.requireSignin, userCtrl.userPosts); // Fetch user posts
+
+// Delete a specific post
+router.delete("/posts/:postId", authCtrl.requireSignin, authCtrl.canDeletePost, deletePost); // Corrected route to delete post
+
+module.exports = router;

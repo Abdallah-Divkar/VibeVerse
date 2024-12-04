@@ -1,84 +1,117 @@
 import React, { useState, useEffect } from "react";
-import "../Dashboard.css";
 import axios from "axios";
+import { useUser } from "@clerk/clerk-react";
 
 const Dashboard = () => {
-  const [userData, setUserData] = useState(null);
+  const { user } = useUser(); // Fetch Clerk's authenticated user
+  const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch user data from backend API
+  // Fetch user profile and posts
   useEffect(() => {
-    // Replace with your actual API endpoint
-    axios.get("/api/user") 
-      .then((response) => {
-        setUserData(response.data.user); // Assuming 'user' contains the user info
-        setPosts(response.data.posts);   // Assuming 'posts' contains the user's posts
-      })
-      .catch((error) => {
-        console.error("Error fetching user data", error);
-      });
-  }, []);
+    const fetchProfileData = async () => {
+      try {
+        // Fetch all users and filter the current user's profile
+        const allUsersRes = await axios.get("/api/users");
+        const currentUser = allUsersRes.data.find((u) => u.email === user.email);
 
-  if (!userData) {
-    return <div>Loading...</div>; // Show loading while data is being fetched
-  }
+        if (!currentUser) {
+          throw new Error("User profile not found.");
+        }
+
+        setProfile(currentUser);
+
+        // Fetch user's posts
+        const postsRes = await axios.get(`/api/users/${currentUser._id}/posts`);
+        setPosts(Array.isArray(postsRes.data) ? postsRes.data : []);
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching profile data:", err);
+        setError("Unable to fetch user data.");
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [user]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
-    <div className="dashboard-container">
+    <div style={styles.container}>
+      <h1>Welcome, {profile.name}!</h1>
+
       {/* Profile Section */}
-      <div className="profile-section">
+      <div style={styles.profile}>
         <img
-          src={userData.profilePicture || "https://via.placeholder.com/80"} // Use Cloudinary URL or fallback image
+          src={profile.profilePic || "default-profile.png"}
           alt="Profile"
-          className="profile-picture"
+          style={styles.profilePic}
         />
-        <div className="profile-info">
-          <h3>{userData.username}</h3>
-          <p>{userData.name}</p>
-          <p>{userData.bio}</p>
-          <button className="edit-profile-button">Edit Profile</button>
-        </div>
-      </div>
-
-      {/* Stats Section */}
-      <div className="stats-section">
         <div>
-          <p className="stats-number">{userData.postsCount}</p>
-          <p>Posts</p>
-        </div>
-        <div>
-          <p className="stats-number">{userData.followers}</p>
-          <p>Followers</p>
-        </div>
-        <div>
-          <p className="stats-number">{userData.following}</p>
-          <p>Following</p>
-        </div>
-      </div>
-
-      {/* Tabs Section */}
-      <div className="tabs-section">
-        <div className="tab active">
-          <i className="fas fa-th-large"></i>
-        </div>
-        <div className="tab">
-          <i className="fas fa-heart"></i>
+          <p><strong>Email:</strong> {profile.email}</p>
+          <p><strong>Bio:</strong> {profile.bio || "No bio available"}</p>
+          <p><strong>Followers:</strong> {profile.followers.length}</p>
+          <p><strong>Following:</strong> {profile.following.length}</p>
         </div>
       </div>
 
       {/* Posts Section */}
-      <div className="posts-section">
-        {posts.map((post, index) => (
-          <img
-            key={index}
-            src={post.imageUrl || "https://via.placeholder.com/150"} // Use Cloudinary URL for post image
-            alt="Post"
-            className="post-image"
-          />
-        ))}
+      <div style={styles.postsContainer}>
+        <h2>Your Posts</h2>
+        {posts.length > 0 ? (
+          <ul style={styles.postList}>
+            {posts.map((post) => (
+              <li key={post._id} style={styles.postItem}>
+                <h3>{post.title}</h3>
+                <p>{post.content}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>You haven't posted anything yet.</p>
+        )}
       </div>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    padding: "20px",
+    fontFamily: "Arial, sans-serif",
+    textAlign: "center",
+  },
+  profile: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: "20px",
+  },
+  profilePic: {
+    width: "120px",
+    height: "120px",
+    borderRadius: "50%",
+    marginRight: "20px",
+    objectFit: "cover",
+  },
+  postsContainer: {
+    marginTop: "20px",
+  },
+  postList: {
+    listStyleType: "none",
+    padding: "0",
+  },
+  postItem: {
+    padding: "10px",
+    border: "1px solid #ddd",
+    borderRadius: "8px",
+    marginBottom: "10px",
+  },
 };
 
 export default Dashboard;

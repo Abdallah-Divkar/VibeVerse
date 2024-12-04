@@ -34,6 +34,7 @@ const UserSchema = new mongoose.Schema({
     profilePic: { // New field for profile picture
         type: String,
         default: '', // Can be a default image URL or empty
+        match: [/^(http(s)?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))$/, 'Please provide a valid URL for the profile picture'] // URL validation
     },
     created: {
         type: Date,

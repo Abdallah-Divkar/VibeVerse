@@ -1,97 +1,31 @@
-/* Container */
-.dashboard-container {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
-  }
-  
-  /* Profile Section */
-  .profile-section {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-  }
-  
-  .profile-picture {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin-right: 20px;
-  }
-  
-  .profile-info h3 {
-    margin: 0;
-    font-size: 18px;
-    color: #333;
-  }
-  
-  .profile-info p {
-    margin: 2px 0;
-    color: #666;
-  }
-  
-  .edit-profile-button {
-    margin-top: 10px;
-    padding: 5px 10px;
-    background-color: #333;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .edit-profile-button:hover {
-    background-color: #555;
-  }
-  
-  /* Stats Section */
-  .stats-section {
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    border-bottom: 1px solid #ccc;
-    text-align: center;
-  }
-  
-  .stats-number {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-  }
-  
-  /* Tabs Section */
-  .tabs-section {
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    border-bottom: 1px solid #ccc;
-  }
-  
-  .tab {
-    font-size: 20px;
-    color: #666;
-    cursor: pointer;
-  }
-  
-  .tab.active {
-    color: #000;
-  }
-  
-  /* Posts Section */
-  .posts-section {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-    margin-top: 10px;
-  }
-  
-  .post-image {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    border-radius: 4px;
-  }
-  
+container {
+  padding: "20px",
+  fontFamily: "Arial, sans-serif",
+  textAlign: "center",
+}
+profile {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  marginBottom: "20px",
+},
+profilePic: {
+  width: "120px",
+  height: "120px",
+  borderRadius: "50%",
+  marginRight: "20px",
+  objectFit: "cover",
+},
+postsContainer: {
+  marginTop: "20px",
+},
+postList: {
+  listStyleType: "none",
+  padding: "0",
+},
+postItem: {
+  padding: "10px",
+  border: "1px solid #ddd",
+  borderRadius: "8px",
+  marginBottom: "10px",
+}

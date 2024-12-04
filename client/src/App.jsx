@@ -1,44 +1,53 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
-//import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
-import { SignUp, SignIn, useAuth } from "@clerk/clerk-react";
-import Landing from "./components/Landing";
-//import Home from "./components/Home";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { SignedIn, SignedOut, RedirectToSignIn, SignUp, SignIn } from "@clerk/clerk-react";
 import Dashboard from "./components/Dashboard";
-import Navbar from "./components/Navbar";
-//import SignUp from "./components/SignUp";
-//import SignIn from "./components/SignIn";
-
-const PrivateRoute = ({ element }) => {
-  const { isSignedIn } = useAuth();
-  const navigate = useNavigate();
-
-  if (!isSignedIn) {
-    // If user is not signed in, redirect to sign-in page
-    navigate("/signin");
-    return null;
-  }
-
-  // Return the element if the user is signed in
-  return element;
-};
 
 const App = () => {
   return (
     <Router>
-      <Navbar />
       <Routes>
-        {/* Landing Page */}
-        <Route path="/" element={<Landing />} />
+        {/* Root Route: Redirect based on auth status */}
+        <Route
+          path="/"
+          element={
+            <>
+              <SignedIn>
+                {/* Redirect signed-in users to Dashboard */}
+                <Navigate to="/dashboard" />
+              </SignedIn>
+              <SignedOut>
+                {/* Display SignIn page for signed-out users */}
+                <SignIn redirectUrl="/dashboard" />
+              </SignedOut>
+            </>
+          }
+        />
 
-        {/* SignUp Page */}
-        <Route path="/signup" element={<SignUp />} />
+        {/* SignUp Route */}
+        <Route
+          path="/signup"
+          element={
+            <SignedOut>
+              {/* Display SignUp page */}
+              <SignUp redirectUrl="/dashboard" />
+            </SignedOut>
+          }
+        />
 
-        {/* SignIn Page */}
-        <Route path="/signin" element={<SignIn />} />
+        {/* Dashboard Route: Only accessible by signed-in users */}
+        <Route
+          path="/dashboard"
+          element={
+            <SignedIn>
+              {/* Display Dashboard for authenticated users */}
+              <Dashboard />
+            </SignedIn>
+          }
+        />
 
-        {/* Private Dashboard Page */}
-        <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+        {/* Catch-all Route: Redirect unauthenticated users to SignIn */}
+        <Route path="*" element={<RedirectToSignIn />} />
       </Routes>
     </Router>
   );
