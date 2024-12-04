@@ -26,15 +26,15 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: 'Password is required'
     },
-    bio: { // Updated order to group profile-related fields
+    bio: { 
         type: String,
         trim: true,
-        maxlength: 500 // Maximum length for bio
+        maxlength: 500 
     },
-    profilePic: { // New field for profile picture
+    profilePic: { 
         type: String,
-        default: '', // Can be a default image URL or empty
-        match: [/^(http(s)?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))$/, 'Please provide a valid URL for the profile picture'] // URL validation
+        default: '',
+        match: [/^(http(s)?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))$/, 'Please provide a valid URL for the profile picture'] 
     },
     created: {
         type: Date,
