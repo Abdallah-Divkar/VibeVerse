@@ -6,17 +6,17 @@ const userCtrl = require("../controllers/user.controller");
 const authCtrl = require("../controllers/auth.controller");
 const postCtrl = require("../controllers/post.controller");
 const upload = require("../middleware/upload");
-const cloudinary = require('../config/config').cloudinary;
+const cloudinary = require('../config/config');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const fs = require('fs');
 
 // Cloudinary configuration
-cloudinary.config({
+/*cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+});*/
 
 // Use requireSignin for protected routes
 router.post('/create', requireSignin, createPost);

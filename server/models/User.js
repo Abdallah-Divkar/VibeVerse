@@ -58,19 +58,46 @@ UserSchema.virtual('password')
     })
     .get(function() {
         return this._password;
-    });
+});
+
+UserSchema.methods.makeSalt = function() {
+    return crypto.randomBytes(16).toString('hex');
+};
+
+// Method to hash the password
+UserSchema.methods.encryptPassword = function(password) {
+    if (!password) return '';
+    try {
+        return crypto
+            .createHmac('sha256', this.salt)  // Using the salt to hash the password
+            .update(password)
+            .digest('hex');
+    } catch (err) {
+        return '';
+    }
+};
 
 // Password validation
-UserSchema.path('hashed_password').validate(function(v) {
+/*UserSchema.path('hashed_password').validate(function(v) {
     if (this._password && this._password.length < 6) {
         this.invalidate('password', 'Password must be at least 6 characters.');
     }
     if (this.isNew && !this._password) {
         this.invalidate('password', 'Password is required');
     }
-}, null);
+}, null);*/
 
 // Methods for password encryption and authentication
+/*UserSchema.methods.authenticate = function(password) {
+    return this.encryptPassword(password) === this.hashed_password;
+};*/
+/*UserSchema.methods.authenticate = function(password) {
+    const hashedPassword = crypto
+      .createHmac('sha256', this.salt)
+      .update(password)
+      .digest('hex');
+    return hashedPassword === this.password; // Compare with the stored hashed password
+  };*/
 UserSchema.methods = {
     authenticate: function(plainText) {
         return this.encryptPassword(plainText) === this.hashed_password;

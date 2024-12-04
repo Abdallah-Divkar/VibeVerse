@@ -11,6 +11,7 @@ const PORT = 5000;
 
 // Middleware
 app.use(express.json()); // Built-in middleware for parsing JSON
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // Connect to MongoDB

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+//const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const cloudinary = require('../config/config').cloudinary;
 const Post = require('../models/Post');
 const fs = require('fs');
@@ -10,35 +11,32 @@ const { ObjectId } = require('mongoose').Types;
 // Create a user with Cloudinary integration
 const create = async (req, res) => {
   try {
-    console.log('Request Body:', req.body); // Log the incoming data to debug
-
     const { name, username, email, password, profilePic } = req.body;
 
-    // Check for missing fields
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
 
-    let profilePicUrl = profilePic || ''; // Default to an empty string if no profile picture is provided
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Username or email already exists' });
+    }
 
-    // Handle file upload (if any)
+    let profilePicUrl = profilePic || '';
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'user_profiles',
-        public_id: `profile_pic_${Date.now()}` // Optional: Set a custom public ID
+        public_id: `profile_pic_${Date.now()}`
       });
-      profilePicUrl = result.secure_url; // Set the Cloudinary image URL
+      profilePicUrl = result.secure_url;
     }
 
-    // Encrypt password before saving the user
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create the user in the database
+    // Create user object and let the password virtual setter handle hashing
     const user = new User({
       name,
       username,
       email,
-      password: hashedPassword,
+      password,  // This will trigger the password setter in the schema
       profilePic: profilePicUrl
     });
 
@@ -46,12 +44,11 @@ const create = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user._id, username: user.username, email: user.email }, // Payload
-      process.env.JWT_SECRET, // Secret key from environment variable
-      { expiresIn: '3d' } // Token expiration time
+      { id: user._id, username: user.username, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '3d' }
     );
 
-    // Send response with the token
     return res.json({
       message: 'User created successfully',
       user,
@@ -62,6 +59,8 @@ const create = async (req, res) => {
     return res.status(400).json({ error: "Could not create user" });
   }
 };
+
+
 
 
 /*const create = async (req, res) => {
@@ -235,7 +234,7 @@ const userPosts = async (req, res) => {
 
 
 // Delete a user
-remove = async (req, res) => {
+const remove = async (req, res) => {
   try {
     // Get user ID from request parameters
     const user = await User.findById(req.params.userId);
