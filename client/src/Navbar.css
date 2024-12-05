@@ -1,0 +1,81 @@
+/* Navbar Styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #0095f6; /* Matching dashboard primary color */
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+  
+  .navbar h1 {
+    font-size: 24px;
+    margin: 0;
+    color: white;
+  }
+  
+  .navLinks {
+    display: flex;
+    align-items: center;
+  }
+  
+  .navLink {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  .welcomeMessage {
+    font-size: 16px;
+    font-weight: 600;
+    margin-right: 15px;
+  }
+  
+  .signOutButton {
+    padding: 8px 15px;
+    background-color: white;
+    color: #0095f6;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 15px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .signOutButton:hover {
+    background-color: #007bb5;
+  }
+  
+  .navLink:hover {
+    color: #fffcfc; /* Light hover effect for better accessibility */
+  }
+  
+  /* Responsive Design: Adjust navbar links for small screens */
+  @media (max-width: 768px) {
+    .navbar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .navLinks {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 10px;
+    }
+  
+    .navLink {
+      margin-left: 0;
+      margin-bottom: 10px;
+    }
+  
+    .signOutButton {
+      margin-left: 0;
+      margin-top: 10px;
+    }
+  }
+  

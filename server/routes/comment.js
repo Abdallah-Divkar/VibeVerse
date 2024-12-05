@@ -1,24 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const {     createComment, getAllComments, getCommentById, getCommentsByUser, getCommentsByPost, deleteComment } = require('../controllers/comment.controller');
-const authenticate = require("../middleware/authenticate");
+const {
+  createComment,
+  getAllComments,
+  getCommentById,
+  getCommentsByUser,
+  getCommentsByPost,
+  deleteComment
+} = require('../controllers/comment.controller');
+const { requireAuth } = require('@clerk/express');
 
-// Route to create a comment
-router.post('/', authenticate, createComment);
+// Create a comment
+router.post('/', requireAuth, createComment);
 
-//get all
-router.get('/', getAllComments); // Route to get all comments
+// Get all comments
+router.get('/', getAllComments);
 
-//ghet by id
-router.get('/:id', getCommentById); // Route to get a comment by its ID
+// Get comment by ID
+router.get('/:id', getCommentById);
 
-//get by user
-router.get('/user/:userId', getCommentsByUser); // Route to get comments by user
+// Get comments by user
+router.get('/user/:userId', requireAuth, getCommentsByUser);
 
-//get by post
-router.get('/post/:postId', getCommentsByPost); // Route to get comments by post
+// Get comments by post
+router.get('/post/:postId', getCommentsByPost);
 
-// Route to delete a comment
-router.delete('/:id', authenticate, deleteComment);
+// Delete a comment
+router.delete('/:id', requireAuth, deleteComment);
 
 module.exports = router;

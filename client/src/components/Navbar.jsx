@@ -1,57 +1,50 @@
 import React from "react";
 import { SignedIn, SignedOut, useUser, SignOutButton } from "@clerk/clerk-react";
+import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const { firstName } = useUser();
 
   return (
-    <nav style={styles.navbar}>
-      <h1>VibeVerse</h1>
-      <div style={styles.navLinks}>
-        <SignedIn>
-          <p>Welcome, {firstName}</p>
-          <SignOutButton>
-            <button style={styles.signOutButton}>Sign Out</button>
-          </SignOutButton>
-        </SignedIn>
-        <SignedOut>
-          <a href="/signin" style={styles.navLink}>
-            Sign In
-          </a>
-          <a href="/signup" style={styles.navLink}>
-            Sign Up
-          </a>
-        </SignedOut>
-      </div>
-    </nav>
+    <AppBar position="static" sx={{ backgroundColor: "#0095f6" }}>
+      <Toolbar>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          VibeVerse
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <SignedIn>
+            <Typography variant="body1" sx={{ marginRight: 2 }}>
+              Welcome, {firstName}
+            </Typography>
+            <SignOutButton>
+              <Button variant="contained" color="secondary">
+                Sign Out
+              </Button>
+            </SignOutButton>
+          </SignedIn>
+          <SignedOut>
+            <Button
+              component={Link}
+              to="/signin"
+              variant="text"
+              sx={{ color: "white", marginLeft: 2 }}
+            >
+              Sign In
+            </Button>
+            <Button
+              component={Link}
+              to="/signup"
+              variant="text"
+              sx={{ color: "white", marginLeft: 2 }}
+            >
+              Sign Up
+            </Button>
+          </SignedOut>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
-};
-
-const styles = {
-  navbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "10px 20px",
-    backgroundColor: "#0095f6",
-    color: "white",
-  },
-  navLinks: {
-    display: "flex",
-    alignItems: "center",
-  },
-  navLink: {
-    color: "white",
-    textDecoration: "none",
-    marginLeft: "15px",
-  },
-  signOutButton: {
-    backgroundColor: "white",
-    color: "#0095f6",
-    border: "none",
-    padding: "5px 10px",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
 };
 
 export default Navbar;

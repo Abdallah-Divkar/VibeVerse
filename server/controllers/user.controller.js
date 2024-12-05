@@ -22,22 +22,22 @@ const create = async (req, res) => {
       return res.status(400).json({ error: 'Username or email already exists' });
     }
 
-    let profilePicUrl = profilePic || '';
+    let profilePicUrl = profilePic || ''; // If profilePic is not provided, use empty string
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'user_profiles',
-        public_id: `profile_pic_${Date.now()}`
+        public_id: `profile_pic_${Date.now()}`,
       });
-      profilePicUrl = result.secure_url;
+      profilePicUrl = result.secure_url; // Cloudinary URL
     }
 
-    // Create user object and let the password virtual setter handle hashing
+    // Create the user object and save
     const user = new User({
       name,
       username,
       email,
-      password,  // This will trigger the password setter in the schema
-      profilePic: profilePicUrl
+      password, // Hashing will be handled by Mongoose pre-save hooks if needed
+      profilePic: profilePicUrl, // Store Cloudinary URL
     });
 
     await user.save();
@@ -52,16 +52,13 @@ const create = async (req, res) => {
     return res.json({
       message: 'User created successfully',
       user,
-      token
+      token,
     });
   } catch (err) {
     console.error(err);
     return res.status(400).json({ error: "Could not create user" });
   }
 };
-
-
-
 
 /*const create = async (req, res) => {
   try {
@@ -101,42 +98,50 @@ const update = async (req, res) => {
     }
 
     const { userId } = req.params;
-    
+
     // Check if the user is updating their own profile
     if (req.user._id.toString() !== userId) {
       return res.status(403).json({ error: 'You can only update your own profile' });
     }
 
-    // Continue with your update logic
     let profilePicUrl = req.body.profilePic || req.user.profilePic;
 
     if (req.file) {
+      // Validate the uploaded file type (image only)
+      const validMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validMimeTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: 'Invalid file type. Only images are allowed' });
+      }
+
+      // If the user has an existing profile picture, delete it from Cloudinary
       if (req.user.profilePic) {
         const publicId = req.user.profilePic.split('/').pop().split('.')[0];
         await cloudinary.uploader.destroy(publicId);
       }
 
+      // Upload the new profile picture to Cloudinary
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'user_profiles',
         public_id: `profile_pic_${userId}`,
       });
 
+      // Update the profile picture URL
       profilePicUrl = result.secure_url;
     }
 
+    // Update the user's profile with the new data
     const updatedUser = await User.findByIdAndUpdate(
-      userId, 
+      userId,
       { ...req.body, profilePic: profilePicUrl },
       { new: true }
     );
 
     return res.status(200).json(updatedUser);
   } catch (err) {
-    console.error(err);
+    console.error('Error updating user profile:', err);
     return res.status(400).json({ error: "Could not update user", details: err.message });
   }
 };
-
 
 
 
@@ -173,7 +178,6 @@ const read = async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 };
-
 
 // Get user's profile by ID or username
 const profile = async (req, res) => {
@@ -212,7 +216,27 @@ const profile = async (req, res) => {
   }
 };
 
+const updateProfile = async (req, res) => {
+  try {
+    const { profilePic } = req.body; // Extract the profilePic URL from the request body
 
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Update the user's profile with the new profile picture URL
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id, 
+      { profilePic }, // Only update the profilePic field
+      { new: true }
+    );
+
+    return res.status(200).json({ message: 'Profile updated successfully', user: updatedUser });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error updating profile' });
+  }
+};
 
 // Get all posts by a specific user
 const userPosts = async (req, res) => {
@@ -231,7 +255,6 @@ const userPosts = async (req, res) => {
     return res.status(400).json({ error: "Could not retrieve user's posts" });
   }
 };
-
 
 // Delete a user
 const remove = async (req, res) => {
@@ -309,7 +332,6 @@ const follow = async (req, res) => {
   }
 };
 
-
 // Unfollow user
 const unfollow = async (req, res) => {
   try {
@@ -345,6 +367,7 @@ module.exports = {
   userByID,
   read,
   profile,
+  updateProfile,
   userPosts,
   remove,
   list,

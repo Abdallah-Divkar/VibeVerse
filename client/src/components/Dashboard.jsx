@@ -1,117 +1,185 @@
 import React, { useState, useEffect } from "react";
+import { useUser, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { Box, Avatar, Typography, Button, TextField, Container } from "@mui/material";
 import axios from "axios";
-import { useUser } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../Dashboard.css";
 
 const Dashboard = () => {
-  const { user } = useUser(); // Fetch Clerk's authenticated user
+  const { isLoaded, isSignedIn, user } = useUser();
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [bio, setBio] = useState("No bio available");
+  const [editingBio, setEditingBio] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const navigate = useNavigate();
 
-  // Fetch user profile and posts
   useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        // Fetch all users and filter the current user's profile
-        const allUsersRes = await axios.get("/api/users");
-        const currentUser = allUsersRes.data.find((u) => u.email === user.email);
+    if (isLoaded && isSignedIn && user) {
+      fetchUserData(user.id);
+      fetchPosts(user.id);
+    }
+  }, [isLoaded, isSignedIn, user]);
 
-        if (!currentUser) {
-          throw new Error("User profile not found.");
-        }
+  const fetchUserData = async (userId) => {
+    try {
+      const statsRes = await axios.get(`/api/users/${userId}/stats`);
+      setFollowerCount(statsRes.data.followerCount || 0);
+      setFollowingCount(statsRes.data.followingCount || 0);
 
-        setProfile(currentUser);
+      setProfile({
+        name: user.firstName || "Anonymous User",
+        email: user.emailAddresses?.[0]?.emailAddress || "No Email Available",
+        profilePic: user.profileImageUrl || "default-profile.png",
+      });
 
-        // Fetch user's posts
-        const postsRes = await axios.get(`/api/users/${currentUser._id}/posts`);
-        setPosts(Array.isArray(postsRes.data) ? postsRes.data : []);
+      setBio(user.publicMetadata?.bio || "No bio available");
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      toast.error("Error fetching user data.");
+      setLoading(false);
+    }
+  };
 
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching profile data:", err);
-        setError("Unable to fetch user data.");
-        setLoading(false);
+  const fetchPosts = async (userId) => {
+    try {
+      const response = await axios.get(`/api/users/${userId}/posts`);
+      if (Array.isArray(response.data.posts)) {
+        setPosts(response.data.posts);
+      } else {
+        toast.error("Failed to load posts.");
       }
-    };
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+      toast.error("Error fetching posts.");
+    }
+  };
 
-    fetchProfileData();
-  }, [user]);
+  const handleBioUpdate = async () => {
+    try {
+      await user.update({ publicMetadata: { bio } });
+      toast.success("Bio updated successfully!");
+      setEditingBio(false);
+    } catch (err) {
+      console.error("Error updating bio:", err);
+      toast.error("Unable to update bio.");
+    }
+  };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (!isLoaded || !isSignedIn) {
+    return <div>Loading user data...</div>;
+  }
 
   return (
-    <div style={styles.container}>
-      <h1>Welcome, {profile.name}!</h1>
+    <Container sx={{ marginTop: 4 }}>
+      <SignedIn>
+        <Typography variant="h4" gutterBottom>
+          Welcome, {profile?.name || "User"}!
+        </Typography>
 
-      {/* Profile Section */}
-      <div style={styles.profile}>
-        <img
-          src={profile.profilePic || "default-profile.png"}
-          alt="Profile"
-          style={styles.profilePic}
-        />
-        <div>
-          <p><strong>Email:</strong> {profile.email}</p>
-          <p><strong>Bio:</strong> {profile.bio || "No bio available"}</p>
-          <p><strong>Followers:</strong> {profile.followers.length}</p>
-          <p><strong>Following:</strong> {profile.following.length}</p>
-        </div>
-      </div>
+        {/* Profile Section */}
+        <Box sx={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
+          <Avatar
+            alt="Profile Picture"
+            src={profile?.profilePic}
+            sx={{ width: 120, height: 120, marginRight: 2 }}
+          />
+          <Box>
+            <Typography variant="body1" gutterBottom>
+              <strong>Email:</strong> {profile?.email}
+              <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => navigate("/edit-profile")}
+            >
+              Edit Profile
+            </Button>
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Bio:</strong>
+            </Typography>
+            {editingBio ? (
+              <Box>
+                <TextField
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  multiline
+                  fullWidth
+                  rows={4}
+                  variant="outlined"
+                  sx={{ marginBottom: 2 }}
+                />
+                <Button variant="contained" color="primary" onClick={handleBioUpdate}>
+                  Save
+                </Button>
+              </Box>
+            ) : (
+              <Box>
+                <Typography variant="body2">{bio}</Typography>
+                <Button variant="outlined" color="primary" onClick={() => setEditingBio(true)}>
+                  Edit Bio
+                </Button>
+              </Box>
+            )}
+            <Typography variant="body1" gutterBottom>
+              <strong>Followers:</strong> {followerCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Following:</strong> {followingCount}
+            </Typography>
+          </Box>
+        </Box>
 
-      {/* Posts Section */}
-      <div style={styles.postsContainer}>
-        <h2>Your Posts</h2>
-        {posts.length > 0 ? (
-          <ul style={styles.postList}>
-            {posts.map((post) => (
-              <li key={post._id} style={styles.postItem}>
-                <h3>{post.title}</h3>
-                <p>{post.content}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>You haven't posted anything yet.</p>
-        )}
-      </div>
-    </div>
+        {/* Post Creation Section */}
+        <Box sx={{ marginBottom: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Create a New Post
+          </Typography>
+          <TextField
+            placeholder="What's on your mind?"
+            multiline
+            rows={3}
+            fullWidth
+            variant="outlined"
+            sx={{ marginBottom: 2 }}
+          />
+          <Button variant="contained" color="primary" onClick={() => console.log("Post created!")}>
+            Post
+          </Button>
+        </Box>
+
+        {/* Posts Section */}
+        <Box sx={{ marginTop: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Your Posts
+          </Typography>
+          {posts.length > 0 ? (
+            posts.map((post) => (
+              <Box
+                key={post._id}
+                sx={{ padding: 2, border: "1px solid #ddd", borderRadius: 1, marginBottom: 2 }}
+              >
+                <Typography variant="h6">{post.title}</Typography>
+                <Typography variant="body1">{post.content}</Typography>
+              </Box>
+            ))
+          ) : (
+            <Typography variant="body2">You haven't posted anything yet.</Typography>
+          )}
+        </Box>
+      </SignedIn>
+      <SignedOut>
+        <Typography variant="h5">
+          You are not signed in. Please sign in to access your dashboard.
+        </Typography>
+      </SignedOut>
+    </Container>
   );
-};
-
-const styles = {
-  container: {
-    padding: "20px",
-    fontFamily: "Arial, sans-serif",
-    textAlign: "center",
-  },
-  profile: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: "20px",
-  },
-  profilePic: {
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    marginRight: "20px",
-    objectFit: "cover",
-  },
-  postsContainer: {
-    marginTop: "20px",
-  },
-  postList: {
-    listStyleType: "none",
-    padding: "0",
-  },
-  postItem: {
-    padding: "10px",
-    border: "1px solid #ddd",
-    borderRadius: "8px",
-    marginBottom: "10px",
-  },
 };
 
 export default Dashboard;
