@@ -5,17 +5,17 @@ import App from './App.jsx';
 //import './main.css'; 
 
 // Retrieve the Clerk publishable key from the environment
-const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 // Ensure the publishable key exists
-if (!clerkPublishableKey) {
-  throw new Error("Missing Clerk publishable key. Check your .env file.");
+if (!PUBLISHABLE_KEY) {
+  throw new Error('Add your Clerk Publishable Key to the .env.local file')
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={clerkPublishableKey}>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
       <App />
     </ClerkProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

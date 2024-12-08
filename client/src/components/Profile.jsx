@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
 import { useParams } from "react-router-dom";
 import { Box, Typography, Avatar } from "@mui/material";
 
@@ -10,7 +11,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get(`/api/users/${username}`);  // Fetch user profile by username
+        const res = await axios.get(`${backendURL}/api/users/${username}`);  // Fetch user profile by username
         setUser(res.data);
       } catch (err) {
         console.error("Error fetching user profile:", err);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useUser, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { useClerk, useUser, SignedIn, SignedOut } from "@clerk/clerk-react";
 import { Box, Avatar, Typography, Button, TextField, Container } from "@mui/material";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -7,11 +7,15 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../Dashboard.css";
 
+const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
+
 const Dashboard = () => {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { user, clerk } = useClerk();  // Use clerk to get token
+  const { isLoaded, isSignedIn } = useUser();
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [bio, setBio] = useState("No bio available");
   const [editingBio, setEditingBio] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
@@ -27,9 +31,12 @@ const Dashboard = () => {
 
   const fetchUserData = async (userId) => {
     try {
-      const statsRes = await axios.get(`/api/users/${userId}/stats`);
+      const statsRes = await axios.get(`${backendURL}/api/users/${userId}/stats`);
       setFollowerCount(statsRes.data.followerCount || 0);
       setFollowingCount(statsRes.data.followingCount || 0);
+
+      const userRes = await axios.get(`${backendURL}/api/users/${userId}`);
+      const user = userRes.data;
 
       setProfile({
         name: user.firstName || "Anonymous User",
@@ -48,7 +55,15 @@ const Dashboard = () => {
 
   const fetchPosts = async (userId) => {
     try {
-      const response = await axios.get(`/api/users/${userId}/posts`);
+      if (!clerk) {
+        toast.error("Clerk is not initialized.");
+        return;
+      }
+      const clerkToken = await clerk.client.getToken();  // Correct way to get the token
+
+      const response = await axios.get(`${backendURL}/api/users/${userId}/posts`, {
+        headers: { Authorization: `Bearer ${clerkToken}` }
+      });
       if (Array.isArray(response.data.posts)) {
         setPosts(response.data.posts);
       } else {

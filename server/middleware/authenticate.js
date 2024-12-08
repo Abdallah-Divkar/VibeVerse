@@ -1,20 +1,17 @@
-const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const cloudinary = require('cloudinary').v2;
 
-const authenticate = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+// Configuring Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-  if (!token) {
-    return res.status(401).json({ message: 'Authorization token required' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Adjust the secret as necessary
-    req.user = decoded; // Attach the decoded user info (including user.id) to the request object
-    next();
-  } catch (error) {
-    console.error('Error verifying token:', error);
-    return res.status(401).json({ message: 'Invalid token' });
-  }
+// Consolidate all configs
+module.exports = {
+  cloudinary,
+  port: process.env.PORT,
+  mongoURI: process.env.MONGO_URI,
+  jwtSecret: process.env.JWT_SECRET,
 };
-
-module.exports = authenticate;

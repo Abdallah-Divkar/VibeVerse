@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const validator = require('validator');
 
 const UserSchema = new mongoose.Schema({
     name: {
@@ -34,7 +35,10 @@ const UserSchema = new mongoose.Schema({
     profilePic: { 
         type: String,
         default: '',
-        match: [/^(http(s)?:\/\/.*\.(?:png|jpg|jpeg|gif|webp))$/, 'Please provide a valid URL for the profile picture'] 
+        validate: {
+            validator: (url) => validator.isURL(url, { protocols: ['http', 'https'], require_protocol: true }),
+            message: 'Please provide a valid URL for the profile picture'
+        }
     },
     created: {
         type: Date,

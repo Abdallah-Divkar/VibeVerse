@@ -1,6 +1,10 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
 const generateJWT = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not defined in the environment variables.');
+  }
+
   const payload = {
     _id: user._id,
     email: user.email,
@@ -8,7 +12,7 @@ const generateJWT = (user) => {
   };
 
   const options = {
-    expiresIn: "1d", // Token expires in 1 day
+    expiresIn: process.env.JWT_EXPIRATION || '1d', // Fallback to 1 day
   };
 
   return jwt.sign(payload, process.env.JWT_SECRET, options);

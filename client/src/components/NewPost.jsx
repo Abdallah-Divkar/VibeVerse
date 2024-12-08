@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
 import { toast } from "react-toastify";
 import { TextField, Button, Typography, Box, Container, CircularProgress } from "@mui/material";
 
@@ -15,7 +16,7 @@ const NewPost = () => {
     formData.append("upload_preset", "your_upload_preset"); // Replace with your Cloudinary preset
 
     try {
-      const res = await axios.post("https://api.cloudinary.com/v1_1/your_cloud_name/image/upload", formData);
+      const res = await axios.post(`${backendURL}/https://api.cloudinary.com/v1_1/your_cloud_name/image/upload`, formData);
       return res.data.secure_url; // Return the uploaded image URL
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -35,7 +36,7 @@ const NewPost = () => {
         if (!imageUrl) throw new Error("Image upload failed");
       }
 
-      const response = await axios.post("/api/posts", { title, content, image: imageUrl });
+      const response = await axios.post(`${backendURL}/api/posts`, { title, content, image: imageUrl });
       toast.success("Post created successfully!");
       setTitle("");
       setContent("");

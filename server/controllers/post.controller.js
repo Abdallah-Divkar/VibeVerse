@@ -2,6 +2,17 @@ const Post = require('../models/Post'); // Make sure to import your Post model
 
 // Create a new post
 const createPost = async (req, res) => {
+  const { title, content, image } = req.body;
+  try {
+    const newPost = new Post({ title, content, image });
+    await newPost.save();
+    res.status(201).json(newPost);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating post' });
+  }
+};
+
+/*const createPost = async (req, res) => {
   try {
     console.log('Request body:', req.body);  // Debug log
     console.log('Uploaded file:', req.file);  // Debug log
@@ -20,7 +31,7 @@ const createPost = async (req, res) => {
   }
 };
 
-/*const createPost = async (req, res) => {
+const createPost = async (req, res) => {
   try {
     const newPost = new Post({
       user: req.user.id, // Assuming user info is attached to the request object by authentication middleware

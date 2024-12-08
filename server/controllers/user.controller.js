@@ -143,8 +143,6 @@ const update = async (req, res) => {
   }
 };
 
-
-
 // Get user by ID middleware
 const userByID = async (req, res, next, id) => {
   try {
@@ -161,6 +159,7 @@ const userByID = async (req, res, next, id) => {
 const read = async (req, res) => {
   try {
     const { userId } = req.params;
+    if (!userId) return res.status(400).json({ message: "User ID is required" });
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -213,6 +212,20 @@ const profile = async (req, res) => {
   } catch (err) {
     console.error("Error fetching user profile:", err);
     return res.status(500).json({ error: "Server error" });
+  }
+};
+
+const getUserProfile = async (req, res) => {
+  try {
+    const { userId } = req.auth;
+    const user = await User.findOne({ clerkId: userId }); // Clerk ID mapped to your DB
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -359,6 +372,23 @@ const unfollow = async (req, res) => {
   }
 };
 
+const getUserStats = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await User.findById(userId).populate('followers following');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const stats = {
+      followerCount: user.followers.length,
+      followingCount: user.following.length,
+    };
+    res.status(200).json(stats);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving user stats', error });
+  }
+};
+
 
 // Export all functions
 module.exports = {
@@ -367,10 +397,12 @@ module.exports = {
   userByID,
   read,
   profile,
+  getUserProfile,
   updateProfile,
   userPosts,
   remove,
   list,
   follow,
-  unfollow
+  unfollow,
+  getUserStats
 };

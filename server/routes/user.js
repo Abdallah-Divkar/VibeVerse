@@ -44,8 +44,27 @@ router.post('/uploadProfilePic', upload.single('profilePic'), async (req, res) =
 
 router.put("/follow/:userId", requireAuth, userCtrl.follow);
 router.put("/unfollow/:userId", requireAuth, userCtrl.unfollow);
+router.get("/:userId/stats", requireAuth, userCtrl.getUserStats); // New route for stats
 
-router.get("/profile/:userId", requireAuth, userCtrl.profile);
+router.get("/:username", userCtrl.getUserProfile);
+router.get("/profile/:userId", requireAuth, userCtrl.getUserProfile);
 router.get("/:userId/posts", requireAuth, userCtrl.userPosts);
+
+router.get('/currentUser', requireAuth, async (req, res) => {
+  try {
+    const userId = req.auth.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving user", error });
+  }
+});
+
 
 module.exports = router;
