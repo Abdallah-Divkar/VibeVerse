@@ -1,14 +1,20 @@
-import axios from 'axios';
+import axios from "axios";
+import { getToken } from "./auth"; // Import the utility to get the token
 
-const API = axios.create({ baseURL: 'http://localhost:3000/api' }); // Adjust the baseURL
-
-// Add a token to requests if needed
-API.interceptors.request.use((req) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
-  }
-  return req;
+const api = axios.create({
+  baseURL: "https://api.yourapp.com", // Replace with your API base URL
 });
 
-export default API;
+// Add a request interceptor to include the token in the Authorization header
+api.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default api;

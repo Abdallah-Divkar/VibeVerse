@@ -41,6 +41,10 @@ const NewPost = () => {
       setTitle("");
       setContent("");
       setImage(null);
+
+      if (onPostCreated) {
+        onPostCreated(); // Trigger callback
+      }
     } catch (error) {
       console.error("Error creating post:", error);
       toast.error("Failed to create post.");

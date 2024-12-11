@@ -5,41 +5,91 @@ const jwtSecret = process.env.JWT_SECRET;
 const generateJWT = require("../middleware/jwtUtil");
 
 /**
+ * Sign up a new user.
+ */
+const signup = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    // Validate required fields
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Check if the email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already in use" });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    // Save the user to the database
+    await newUser.save();
+
+    return res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+      },
+    });
+  } catch (err) {
+    console.error("Error during signup:", err);
+    return res.status(500).json({ error: "Error during signup" });
+  }
+};
+
+/**
  * Sign in a user.
  */
 const signin = async (req, res) => {
+  const { usernameOrEmail, password } = req.body;
+
   try {
-    const { email, password } = req.body;
+    // Check if the input is either a username or email
+    const user = await User.findOne({
+      $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
+    });
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ error: 'User not found' });
+      return res.status(400).json({ success: false, message: 'User not found' });
     }
 
-    // Use the authenticate method to check if the password matches
-    const isPasswordValid = user.authenticate(password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ error: 'Invalid password' });
+    // Check if the password is correct
+    if (!user.authenticate(password)) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
+    // Create JWT token
     const token = jwt.sign(
-      { id: user._id, username: user.username, email: user.email },
+      { userId: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: '3d' }
+      { expiresIn: '1h' }
     );
 
-    return res.json({
-      message: 'Login successful',
-      user,
-      token
+    // Send response with token
+    res.json({
+      success: true,
+      token,
+      user: {
+        username: user.username,
+        email: user.email,
+        profilePic: user.profilePic,
+      },
     });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Error during sign-in" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -105,6 +155,7 @@ const canDeletePost = async (req, res, next) => {
 };
 
 module.exports = {
+  signup,
   signin,
   signout,
   requireSignin,

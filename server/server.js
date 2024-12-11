@@ -16,25 +16,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware Setup
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
+app.use(cors({ origin: "http://localhost:5173" }));
 
 app.use(bodyParser.json());
-app.use(clerkMiddleware({
-  apiKey: process.env.CLERK_API_KEY,  // Secret API key for backend
-}));
 app.use(express.json()); // Parse incoming requests with JSON payloads
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
 
 // Handle preflight requests (OPTIONS) explicitly
 //app.options('*', cors(corsOptions)); // Allow preflight requests for all routes
 
-app.use(withAuth());  // Ensure authentication middleware is applied globally
+//app.use(withAuth());  // Ensure authentication middleware is applied globally
 
 // Connect to MongoDB
 mongoose
@@ -43,17 +34,16 @@ mongoose
   .catch((err) => console.error("Database connection error:", err));
 
 // Routes
-app.use('/api/webhooks', webhookRoute);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", cmtRoutes);
 app.use("/api/auth", authRoutes);
 
 // Example: Protect specific routes with Clerk middleware
-app.use("/api/protected", requireAuth(), (req, res) => {
+/*app.use("/api/protected", requireAuth(), (req, res) => {
   console.log("Authenticated user:", req.auth);  // Log the req.auth object
   res.send(`Hello, authenticated user with ID: ${req.auth.userId}`);
-});
+});*/
 
 /*app.get("/api/users/currentUser", requireAuth(), (req, res) => {
   const currentUser = req.auth;  // Access current user information

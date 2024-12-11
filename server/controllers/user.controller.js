@@ -11,7 +11,7 @@ const { ObjectId } = require('mongoose').Types;
 // Create a user with Cloudinary integration
 const create = async (req, res) => {
   try {
-    const { name, username, email, password, profilePic } = req.body;
+    const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
@@ -22,7 +22,7 @@ const create = async (req, res) => {
       return res.status(400).json({ error: 'Username or email already exists' });
     }
 
-    let profilePicUrl = profilePic || ''; // If profilePic is not provided, use empty string
+    let profilePicUrl = profilePic || 'https://res.cloudinary.com/daqkitloj/image/upload/v1733786820/default-profile-pic_axwxip.png';
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'user_profiles',

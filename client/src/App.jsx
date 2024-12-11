@@ -1,114 +1,36 @@
 import React from "react";
-import { SignedIn, SignedOut, SignIn, SignUp } from "@clerk/clerk-react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Dashboard from "./components/Dashboard";
 import NewPost from "./components/NewPost";
-import EditProfile from "./components/EditProfile";  // Import EditProfile
-import Profile from "./components/Profile";  // Import Profile
-import AllPosts from "./components/AllPost";  // Import AllPosts
-import Navbar from "./components/Navbar"; 
+import EditProfile from "./components/EditProfile";
+import Profile from "./components/Profile";
+import AllPosts from "./components/AllPost";
+import Navbar from "./components/Navbar";
+import SignIn from "./components/SignIn";
+import SignUp from "./components/SignUp";
+import { AuthProvider } from './context/AuthContext';
+import PrivateRoute from "./PrivateRoute";
 
 const App = () => {
-  //const clerkFrontendApi = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
   return (
+    <AuthProvider>
       <Router>
-        <Navbar />
-
         <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                <SignedIn>
-                  <Navigate to="/dashboard" />
-                </SignedIn>
-                <SignedOut>
-                  {/* Display SignIn page for signed-out users */}
-                  <SignIn redirectUrl="/dashboard" />
-                </SignedOut>
-              </>
-            }
-          />
-
-          {/* SignUp Route */}
-          <Route
-            path="/signup"
-            element={<SignedOut><SignUp redirectUrl="/dashboard" /></SignedOut>}
-          />
-
-          {/* SignIn Route */}
-          <Route
-            path="/signin"
-            element={
-              <SignedOut>
-                <SignIn redirectUrl="/dashboard" />
-              </SignedOut>
-            }
-          />
-
-          {/* Dashboard Route: Only accessible by signed-in users */}
-          <Route
-            path="/dashboard"
-            element={
-              <SignedIn>
-                {/* Display Dashboard for authenticated users */}
-                <Dashboard />
-              </SignedIn>
-            }
-          />
-
-          {/* EditProfile Route: Only accessible by signed-in users */}
-          <Route
-            path="/edit-profile"
-            element={
-              <SignedIn>
-                {/* Display Edit Profile page */}
-                <EditProfile />
-              </SignedIn>
-            }
-          />
-
-          {/* Profile Route: Display any user's profile */}
-          <Route
-            path="/profile/:username"
-            element={
-              <SignedIn>
-                {/* Display Profile page of a specific user */}
-                <Profile />
-              </SignedIn>
-            }
-          />
-
-          {/* All Posts Route: Display all posts */}
-          <Route
-            path="/all-posts"
-            element={
-              <SignedIn>
-                {/* Display All Posts page */}
-                <AllPosts />
-              </SignedIn>
-            }
-          />
-
-          {/* New Post Route */}
-          <Route
-            path="/new-post"
-            element={
-              <SignedIn>
-                {/* Display New Post page */}
-                <NewPost />
-              </SignedIn>
-            }
-          />
-
-          {/* Catch-all Route: Redirect unauthenticated users to SignIn */}
-          <Route
-            path="*"
-            element={<Navigate to="/signin" />}
-          />
+          <Route path="/" element={<Navigate to="/signin" />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/navbar" element={<Navbar />} />
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/new-post" element={<PrivateRoute><NewPost /></PrivateRoute>} />
+          <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          <Route path="/all-posts" element={<PrivateRoute><AllPosts /></PrivateRoute>} />
         </Routes>
+        <ToastContainer />
       </Router>
+    </AuthProvider>
   );
 };
 

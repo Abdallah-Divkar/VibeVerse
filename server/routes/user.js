@@ -17,6 +17,26 @@ router.delete('/delete/:postId', requireAuth, postCtrl.deletePost);
 router.post("/", upload.single("profilePic"), userCtrl.create);
 router.post('/updateProfile', requireAuth, userCtrl.updateProfile);
 
+router.post("/", async (req, res) => {
+  try {
+    const { username, email, password, profilePic } = req.body;
+
+    const newUser = new User({
+      username,
+      email,
+      password,
+      profilePic: profilePic || "https://res.cloudinary.com/daqkitloj/image/upload/v1733786820/default-profile-pic_axwxip.png", // Default profilePic
+    });
+
+    await newUser.save();
+    res.status(201).json({ message: "User created successfully!", user: newUser });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+
 router
   .route("/")
   .get(requireAuth, userCtrl.list)

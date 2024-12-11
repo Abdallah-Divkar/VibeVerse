@@ -211,15 +211,6 @@
     qrcode.react "3.1.0"
     regenerator-runtime "0.13.11"
 
-"@clerk/clerk-react@^5.19.0":
-  version "5.19.0"
-  resolved "https://registry.npmjs.org/@clerk/clerk-react/-/clerk-react-5.19.0.tgz"
-  integrity sha512-h2nVLvc8PYnxfH+sq+75Ispmu4M/hf142+tpxKSPD0AtKDEm3DHH+rP5B1kRwyT+F/2wn4M4oBpQC+fm95+nDg==
-  dependencies:
-    "@clerk/shared" "2.19.1"
-    "@clerk/types" "4.39.0"
-    tslib "2.4.1"
-
 "@clerk/clerk-sdk-node@^5.0.71":
   version "5.0.71"
   resolved "https://registry.npmjs.org/@clerk/clerk-sdk-node/-/clerk-sdk-node-5.0.71.tgz"
@@ -261,18 +252,6 @@
     std-env "^3.7.0"
     swr "^2.2.0"
 
-"@clerk/shared@2.19.1":
-  version "2.19.1"
-  resolved "https://registry.npmjs.org/@clerk/shared/-/shared-2.19.1.tgz"
-  integrity sha512-ewTEIK91TEsQIQLsSFofAaCD8ZPYMy+1UgBB/k4Q8mese9A7mtE696FENaMXwu0YDyOg6yqgoHMOxOIYs8batQ==
-  dependencies:
-    "@clerk/types" "4.39.0"
-    dequal "2.0.3"
-    glob-to-regexp "0.4.1"
-    js-cookie "3.0.5"
-    std-env "^3.7.0"
-    swr "^2.2.0"
-
 "@clerk/types@4.35.0":
   version "4.35.0"
   resolved "https://registry.npmjs.org/@clerk/types/-/types-4.35.0.tgz"
@@ -284,13 +263,6 @@
   version "4.36.0"
   resolved "https://registry.npmjs.org/@clerk/types/-/types-4.36.0.tgz"
   integrity sha512-WrwFNJeiToDCCSxzPRbjRnI541lLSyBwtncrGCV4zVr8NhQeEVWlPdbEYzLvQbFu6qYT1ifbE5UR/krHNI79TA==
-  dependencies:
-    csstype "3.1.1"
-
-"@clerk/types@4.39.0":
-  version "4.39.0"
-  resolved "https://registry.npmjs.org/@clerk/types/-/types-4.39.0.tgz"
-  integrity sha512-WWEoXmcob6X80cZZZGobN8aKjHAjAoL0cgVyLX8UeQ+JW4kl1IfUmZQgDBFOafGEm2yUoKlKAP22bWPDqmbTJw==
   dependencies:
     csstype "3.1.1"
 

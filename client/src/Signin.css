@@ -1,0 +1,65 @@
+.sign-in-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #d9d9d9;
+}
+
+.sign-in-form {
+  background-color: #d9d9d9;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  height: 500px;
+}
+
+.sign-in-form h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color:black;
+
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;  /* Centers form groups */
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-size: 14px;
+  color: #333;
+  display: block;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-top: 5px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+button:hover {
+  background-color: black;
+}
+
+.error-message {
+  color: red;
+  font-size: 12px;
+  text-align: center;
+}
