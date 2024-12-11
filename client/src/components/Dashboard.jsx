@@ -1,280 +1,113 @@
-import React, { useState, useEffect } from "react";
-import { Box, Avatar, Typography, Button, TextField, Container } from "@mui/material";
-import axios from "axios";
+import React, { useState } from "react";
+import { Container, Box, Avatar, Typography, Button, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "../Dashboard.css";
-import { useAuth } from "../context/AuthContext";
+import Navbar from "./Navbar"; // Your Navbar component
+import { useAuth } from "../context/AuthContext"; // Custom AuthContext for user info
 
 const backendURL = import.meta.env.VITE_BACKEND_URL;
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [bio, setBio] = useState("No bio available");
-  const [editingBio, setEditingBio] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newProfilePic, setNewProfilePic] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth(); // Access user data from AuthContext
+  const [bio, setBio] = useState(user?.bio || "No bio available"); // Default bio if user doesn't have one
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    console.log("User:", user); // Log the user to verify it's being set
-    if (!user?.token || !user?.id) {
-      navigate("/signin"); // Redirect if no user or token
-      return;
-    }
-    fetchUserData(user.id);
-    fetchPosts(user.id);
-  }, [user?.token, user?.id, navigate]);
-  
-
-  const fetchUserData = async (userId) => {
-    const token = user?.token || localStorage.getItem('token');
-    if (!token) {
-      toast.error("User token is missing.");
-      navigate("/signin");
-      return;
-    }
-
-    try {
-      const userRes = await axios.get(`${backendURL}/api/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const userData = userRes.data;
-
-      setProfile({
-        name: userData.firstName || "Anonymous User",
-        username: userData.username,
-        email: userData.emailAddresses?.[0]?.emailAddress || "No Email Available",
-        profilePic: userData.profileImageUrl || "default-profile.png",
-      });
-
-      setBio(userData.bio || "No bio available");
-      setFollowerCount(userData.followers.length); // Assuming followers is an array
-      setFollowingCount(userData.following.length); // Assuming following is an array
-    } catch (err) {
-      console.error("Error fetching user data:", err);
-      toast.error("Error fetching user data.");
-    }
-  };
-
-  const fetchPosts = async (userId) => {
-    try {
-      const response = await axios.get(`${backendURL}/api/users/${userId}/posts`, {
-        headers: { Authorization: `Bearer ${user?.token}` }
-      });
-      if (Array.isArray(response.data.posts)) {
-        setPosts(response.data.posts);
-      } else {
-        toast.error("Failed to load posts.");
-      }
-    } catch (err) {
-      console.error("Error fetching posts:", err);
-      toast.error("Error fetching posts.");
-    } finally {
-      setLoading(false);  // Set loading to false after data is fetched
-    }
-  };
-
+  // Handle bio update
   const handleBioUpdate = async () => {
-    if (!bio.trim()) return toast.error("Bio cannot be empty.");
-    
+    if (!bio.trim()) {
+      toast.error("Bio cannot be empty.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
     try {
-      const response = await axios.put(
-        `${backendURL}/api/users/${user.id}`,
+      await axios.put(
+        `${backendURL}/api/users/${user._id}`,
         { bio },
-        { headers: { Authorization: `Bearer ${user.token}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Bio updated successfully!");
-      setEditingBio(false);
     } catch (err) {
-      console.error(err);
       toast.error("Failed to update bio.");
-    }
-  }; 
-
-  const handleProfileUpdate = async () => {
-    try {
-      if (!user?.token) {
-        toast.error("User token is missing.");
-        return;
-      }
-
-      const updatedProfileData = {
-        username: newUsername || profile?.username,
-        email: newEmail || profile?.email,
-        profilePic: newProfilePic || profile?.profilePic
-      };
-
-      const response = await axios.put(
-        `${backendURL}/api/users/${user.id}`,
-        updatedProfileData,
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-
-      if (response?.data) {
-        toast.success("Profile updated successfully!");
-        setProfile((prevProfile) => ({
-          ...prevProfile,
-          username: newUsername || prevProfile.username,
-          email: newEmail || prevProfile.email,
-          profilePic: newProfilePic || prevProfile.profilePic,
-        }));
-        setIsEditingProfile(false);
-      } else {
-        toast.error("Profile update failed. Please try again.");
-      }
-    } catch (err) {
-      console.error("Error updating profile:", err);
-      toast.error("Unable to update profile.");
     }
   };
 
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem("token");
     navigate("/signin");
   };
 
-  // Handle loading state and ensure profile is fetched before rendering
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!profile) {
-    return <div>Error loading profile.</div>;
+  if (!user) {
+    return <CircularProgress sx={{ display: 'block', margin: 'auto', marginTop: 5 }} />;
   }
 
   return (
     <Container sx={{ marginTop: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Welcome, {profile?.name || "User"}!
+      {/* Welcome Message */}
+      <Typography variant="h4" gutterBottom align="center">
+        Welcome, {user.name}!
       </Typography>
 
-      <Box sx={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
+      <Box sx={{ textAlign: "center" }}>
+        {/* Profile Info */}
         <Avatar
           alt="Profile Picture"
-          src={profile?.profilePic}
-          sx={{ width: 120, height: 120, marginRight: 2 }}
+          src={user.profilePic || "/default-avatar.png"} // Fallback to default image if profilePic doesn't exist
+          sx={{ width: 120, height: 120, marginBottom: 2, marginX: "auto" }}
         />
-        <Box>
-          <Typography variant="body1" gutterBottom>
-            <strong>Email:</strong> {profile?.email}
+        <Typography variant="h6">{user.username}</Typography>
+        <Typography variant="body1">{user.email}</Typography>
+
+        <Box sx={{ marginTop: 3 }}>
+          <Typography variant="body1">
+            <strong>Bio:</strong> {bio}
           </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Bio:</strong>
+          <Button variant="outlined" color="primary" onClick={handleBioUpdate} sx={{ marginTop: 2 }}>
+            Update Bio
+          </Button>
+
+          <Typography variant="body1" sx={{ marginTop: 2 }}>
+            <strong>Followers:</strong> {user.followers?.length || 0} | <strong>Following:</strong> {user.following?.length || 0}
           </Typography>
-          {editingBio ? (
-            <Box>
-              <TextField
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                multiline
-                fullWidth
-                rows={4}
-                variant="outlined"
-                sx={{ marginBottom: 2 }}
-              />
-              <Button variant="contained" color="primary" onClick={handleBioUpdate}>
-                Save
-              </Button>
-            </Box>
+        </Box>
+
+        {/* Posts Section */}
+        <Box sx={{ marginTop: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Your Posts
+          </Typography>
+          {user.posts?.length > 0 ? (
+            user.posts.map((post) => (
+              <Box key={post._id} sx={{ marginBottom: 2 }}>
+                <Typography variant="body1">{post.content}</Typography>
+              </Box>
+            ))
           ) : (
-            <Box>
-              <Typography variant="body2">{bio}</Typography>
-              <Button variant="outlined" color="primary" onClick={() => setEditingBio(true)}>
-                Edit Bio
-              </Button>
-            </Box>
+            <Typography variant="body2">No posts yet. Start creating posts!</Typography>
           )}
-          <Typography variant="body1" gutterBottom>
-            <strong>Followers:</strong> {followerCount}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Following:</strong> {followingCount}
-          </Typography>
+        </Box>
 
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => setIsEditingProfile(true)}
-          >
+        {/* Bottom Navbar */}
+        <Box sx={{ marginTop: 4 }}>
+          <Button variant="contained" color="primary" sx={{ marginRight: 2 }} onClick={() => navigate("/createpost")}>
+            Create Post
+          </Button>
+          <Button variant="contained" color="secondary" sx={{ marginRight: 2 }} onClick={() => navigate("/profile/edit")}>
             Edit Profile
           </Button>
-        </Box>
-      </Box>
-
-      {isEditingProfile && (
-        <Box sx={{ marginBottom: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Edit Profile
-          </Typography>
-          <TextField
-            label="Username"
-            value={newUsername || profile?.username}
-            onChange={(e) => setNewUsername(e.target.value)}
-            fullWidth
-            variant="outlined"
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            label="Email"
-            value={newEmail || profile?.email}
-            onChange={(e) => setNewEmail(e.target.value)}
-            fullWidth
-            variant="outlined"
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            label="Profile Picture URL"
-            value={newProfilePic || profile?.profilePic}
-            onChange={(e) => setNewProfilePic(e.target.value)}
-            fullWidth
-            variant="outlined"
-            sx={{ marginBottom: 2 }}
-          />
-          <Button variant="contained" color="primary" onClick={handleProfileUpdate}>
-            Save Changes
+          <Button variant="contained" color="default" onClick={() => navigate("/users")}>
+            View Users
           </Button>
         </Box>
-      )}
 
-      <Button variant="contained" color="secondary" onClick={handleLogout}>
-        Logout
-      </Button>
-
-      <Box sx={{ marginBottom: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          Create a New Post
-        </Typography>
-        <TextField
-          placeholder="What's on your mind?"
-          multiline
-          rows={3}
-          fullWidth
-          variant="outlined"
-          sx={{ marginBottom: 2 }}
-        />
-        <Button variant="contained" color="primary">
-          Post
-        </Button>
-      </Box>
-
-      <Box>
-        <Typography variant="h6" gutterBottom>
-          User Posts
-        </Typography>
-        {posts.map((post) => (
-          <Box key={post._id} sx={{ marginBottom: 2 }}>
-            <Typography variant="body1">{post.content}</Typography>
-          </Box>
-        ))}
+        <Box sx={{ marginTop: 3 }}>
+          <Button variant="contained" color="error" onClick={handleLogout}>
+            Logout
+          </Button>
+        </Box>
       </Box>
     </Container>
   );

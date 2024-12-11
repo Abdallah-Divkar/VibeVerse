@@ -5,6 +5,7 @@ import { Favorite, FavoriteBorder, Comment } from "@mui/icons-material";
 import { toast } from "react-toastify";
 const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
 import "react-toastify/dist/ReactToastify.css";
+import axiosInstance from "../api/axiosInstance";
 
 const AllPost = () => {
   const [posts, setPosts] = useState([]);
@@ -21,7 +22,7 @@ const AllPost = () => {
     setLoading(true);
 
     try {
-      const res = await axios.get(`${backendURL}/api/posts?page=${page}`);
+      const res = await axiosInstance.get(`/posts?page=${page}`);
       const fetchedPosts = res.data;
 
       if (fetchedPosts.length === 0) {
@@ -55,8 +56,8 @@ const AllPost = () => {
   const handleLike = async (postId, isLiked) => {
     try {
       const res = isLiked
-        ? await axios.post(`${backendURL}/api/posts/${postId}/unlike`)
-        : await axios.post(`${backendURL}/api/posts/${postId}/like`);
+        ? await axiosInstance.post(`/posts/${postId}/unlike`)
+        : await axiosInstance.post(`/posts/${postId}/like`);
       const updatedPost = res.data;
       setPosts((prevPosts) =>
         prevPosts.map((post) => (post._id === postId ? updatedPost : post))
@@ -73,7 +74,7 @@ const AllPost = () => {
       return;
     }
     try {
-      const res = await axios.post(`${backendURL}/api/posts/${postId}/comment`, { content: commentText });
+      const res = await axiosInstance.post(`/posts/${postId}/comment`, { content: commentText });
       const updatedPost = res.data;
       setPosts((prevPosts) =>
         prevPosts.map((post) => (post._id === postId ? updatedPost : post))
@@ -92,7 +93,7 @@ const AllPost = () => {
 
   const saveEdit = async () => {
     try {
-      const res = await axios.put(`${backendURL}/api/posts/${editingPost._id}`, {
+      const res = await axiosInstance.put(`/posts/${editingPost._id}`, {
         title: editingPost.title,
         content: editingPost.content,
       });

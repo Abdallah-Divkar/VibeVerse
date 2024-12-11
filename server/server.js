@@ -8,15 +8,16 @@ const userRoutes = require("./routes/user");
 const postRoutes = require("./routes/post");
 const authRoutes = require("./routes/auth.routes");
 const cmtRoutes = require("./routes/comment");
-const webhookRoute = require('./routes/webhook');
-const { withAuth  } = require('@clerk/clerk-sdk-node');
-const { clerkMiddleware, requireAuth } = require("@clerk/express");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware Setup
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({
+  origin: 'http://localhost:5173', // Replace with your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(bodyParser.json());
 app.use(express.json()); // Parse incoming requests with JSON payloads

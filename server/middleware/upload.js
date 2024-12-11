@@ -1,3 +1,4 @@
+// middleware/upload.js
 const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/config'); // Assuming cloudinary is exported from your config file
@@ -26,6 +27,6 @@ const upload = multer({
     }
     cb(new Error('Only .jpg, .jpeg, and .png files are allowed.'));
   },
-});
+}).single('profilePic'); // Adjust the field name if necessary (e.g., 'profilePic')
 
 module.exports = upload;

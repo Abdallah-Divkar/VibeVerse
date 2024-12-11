@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import "../Signin.css";
 import { useAuth } from "../context/AuthContext";
+import { Typography, Button } from "@mui/material"; // Import Typography and Button
 
 const backendURL = import.meta.env.VITE_BACKEND_URL;
 
@@ -27,11 +29,13 @@ const SignIn = () => {
     e.preventDefault();
   
     try {
-      const response = await axios.post(`${backendURL}/api/auth/signin`, credentials);
+      const response = await axiosInstance.post(`/auth/signin`, credentials);
       if (response.data.success) {
         // Store token and user in localStorage
-        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        const token = localStorage.getItem('authToken', response.data.token);
+        console.log("Retrieved Token:", token);
   
         // Update context
         login(response.data.user, response.data.token); // Use login function from context
@@ -77,7 +81,16 @@ const SignIn = () => {
         </div>
         {error && <p className="error-message">{error}</p>}
         <button type="submit">Sign In</button>
+
+        <Typography variant="body2" sx={{ marginTop: 2 }}>
+          Don't have an account?{" "}
+          <Button color="primary" onClick={() => navigate("/signup")}>
+            Sign Up
+          </Button>
+        </Typography>
       </form>
+
+
     </div>
   );
 };

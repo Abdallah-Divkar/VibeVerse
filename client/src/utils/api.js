@@ -1,7 +1,9 @@
 import axios from "axios";
+import axiosInstance from "../api/axiosInstance";
+
 import { getToken } from "./auth"; // Import the utility to get the token
 
-const api = axios.create({
+const api = axiosInstance.create({
   baseURL: "https://api.yourapp.com", // Replace with your API base URL
 });
 

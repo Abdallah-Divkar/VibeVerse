@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import cloudinaryConfig from '../config/config'; 
 import axios from 'axios';
+import axiosInstance from "../api/axiosInstance";
 const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
 
 const ProfilePicUpload = () => {
@@ -39,7 +40,7 @@ const ProfilePicUpload = () => {
 
     try {
       setLoading(true);
-      const response = await axios.post(`${backendURL}/api/user/updateProfile`, {
+      const response = await axiosInstance.post(`/users/updateProfile`, {
         profilePic: uploadedImage, // Send the uploaded image URL
       });
       console.log('Profile updated successfully:', response.data);

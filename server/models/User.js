@@ -34,12 +34,8 @@ const UserSchema = new mongoose.Schema({
     },
     profilePic: { 
         type: String,
-        default: 'https://res.cloudinary.com/daqkitloj/image/upload/v1733786820/default-profile-pic_axwxip.png', // Default profile picture
-        // Optional validation for URL (if needed)
-        /* validate: {
-            validator: (url) => validator.isURL(url, { protocols: ['http', 'https'], require_protocol: true }),
-            message: 'Please provide a valid URL for the profile picture'
-        } */
+        default: 'https://res.cloudinary.com/daqkitloj/image/upload/v1733786820/default-profile-pic_axwxip.png', 
+
     },    
     created: {
         type: Date,

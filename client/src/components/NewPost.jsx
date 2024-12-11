@@ -1,106 +1,131 @@
 import React, { useState } from "react";
 import axios from "axios";
-const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
-import { toast } from "react-toastify";
-import { TextField, Button, Typography, Box, Container, CircularProgress } from "@mui/material";
+import axiosInstance from "../api/axiosInstance";
+import { Button, TextField, Typography, Box } from "@mui/material";
+import { toast } from "react-toastify"; // For notifications
+import "react-toastify/dist/ReactToastify.css";
+
+//const backendURL = import.meta.env.VITE_BACKEND_URL;
+const backendURL = "http://localhost:3000";
 
 const NewPost = () => {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [image, setImage] = useState(null);
+  const [caption, setCaption] = useState("");
+  const [media, setMedia] = useState(null); // Image or video
+  const [mediaType, setMediaType] = useState(null); // Track media type (image/video)
   const [loading, setLoading] = useState(false);
 
-  const uploadImage = async (file) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "your_upload_preset"); // Replace with your Cloudinary preset
-
-    try {
-      const res = await axios.post(`${backendURL}/https://api.cloudinary.com/v1_1/your_cloud_name/image/upload`, formData);
-      return res.data.secure_url; // Return the uploaded image URL
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast.error("Failed to upload image.");
-      return null;
+  const handleMediaChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file type and set media type accordingly
+      const fileType = file.type.split("/")[0]; // Get the type (image or video)
+      setMedia(file);
+      setMediaType(fileType);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handlePostSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      let imageUrl = null;
-      if (image) {
-        imageUrl = await uploadImage(image);
-        if (!imageUrl) throw new Error("Image upload failed");
-      }
-
-      const response = await axios.post(`${backendURL}/api/posts`, { title, content, image: imageUrl });
-      toast.success("Post created successfully!");
-      setTitle("");
-      setContent("");
-      setImage(null);
-
-      if (onPostCreated) {
-        onPostCreated(); // Trigger callback
-      }
-    } catch (error) {
-      console.error("Error creating post:", error);
-      toast.error("Failed to create post.");
+  
+    if (!caption.trim()) {
+      toast.error("Caption cannot be empty.");
+      return;
     }
-
-    setLoading(false);
+    if (!media) {
+      toast.error("Please select an image or video.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append("content", caption);
+    formData.append("photo", media);
+  
+    const token = localStorage.getItem("authToken");
+    console.log("Retrieved Token:", token);
+  
+    if (!token) {
+      toast.error("Authentication token is missing. Please log in again.");
+      return;
+    }
+  
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      };
+  
+      const response = await axiosInstance.post("/posts/create", formData, config);
+      if (response.status === 201) {
+        toast.success("Post created successfully!");
+        // Handle successful response
+      } else {
+        toast.error(response.data.message || "Failed to create post.");
+      }
+    } catch (err) {
+      console.error("Error:", err.response?.data || err.message);
+      toast.error("An error occurred while creating the post.");
+    }
   };
+  
 
   return (
-    <Container sx={{ marginTop: 4 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ maxWidth: 600, margin: "0 auto", padding: 2 }}>
+      <Typography variant="h5" gutterBottom>
         Create a New Post
       </Typography>
-      <form onSubmit={handleSubmit}>
-        <Box sx={{ marginBottom: 2 }}>
-          <TextField
-            label="Title"
-            variant="outlined"
-            fullWidth
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </Box>
-        <Box sx={{ marginBottom: 2 }}>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImage(e.target.files[0])}
-          />
-        </Box>
-        <Box sx={{ marginBottom: 2 }}>
-          <TextField
-            label="Content"
-            variant="outlined"
-            fullWidth
-            multiline
-            rows={4}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-          />
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            disabled={loading}
-            sx={{ padding: "10px 20px" }}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Submit Post"}
-          </Button>
-        </Box>
+
+      <form onSubmit={handlePostSubmit}>
+        {/* Caption Field */}
+        <TextField
+          label="Caption"
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          fullWidth
+          multiline
+          rows={4}
+          margin="normal"
+        />
+
+        {/* File input for image/video */}
+        <input
+          type="file"
+          accept="image/*,video/*"
+          onChange={handleMediaChange}
+          style={{ margin: "10px 0" }}
+        />
+
+        {/* Show preview of selected media */}
+        {media && (
+          <Box sx={{ marginTop: 2, textAlign: "center" }}>
+            {mediaType === "image" ? (
+              <img
+                src={URL.createObjectURL(media)}
+                alt="preview"
+                style={{ maxWidth: "100%", maxHeight: "300px" }}
+              />
+            ) : mediaType === "video" ? (
+              <video controls style={{ maxWidth: "100%", maxHeight: "300px" }}>
+                <source src={URL.createObjectURL(media)} type={media.type} />
+              </video>
+            ) : null}
+          </Box>
+        )}
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          disabled={loading}
+          sx={{ marginTop: 2 }}
+        >
+          {loading ? "Creating Post..." : "Post"}
+        </Button>
       </form>
-    </Container>
+    </Box>
   );
 };
 

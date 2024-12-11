@@ -1,16 +1,15 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext'; // Ensure correct import path
+import { useAuth } from './context/AuthContext'; 
 
 const PrivateRoute = ({ children }) => {
-  const { user } = useAuth(); // Access the user from the context
-  const token = localStorage.getItem('token');
+  const { user } = useAuth(); 
 
-  if (!user || !token) {
-    return <Navigate to="/signin" />;
+  if (!user) {
+    return <Navigate to="/signin" />; // Redirect to signin if user is not authenticated
   }
 
-  return children;
+  return children; // Render the protected route if user is authenticated
 };
 
 export default PrivateRoute;

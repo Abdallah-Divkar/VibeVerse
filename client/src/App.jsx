@@ -1,34 +1,63 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import Dashboard from "./components/Dashboard";
-import NewPost from "./components/NewPost";
-import EditProfile from "./components/EditProfile";
-import Profile from "./components/Profile";
-import AllPosts from "./components/AllPost";
-import Navbar from "./components/Navbar";
-import SignIn from "./components/SignIn";
-import SignUp from "./components/SignUp";
-import { AuthProvider } from './context/AuthContext';
-import PrivateRoute from "./PrivateRoute";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Dashboard from './components/Dashboard';
+import EditProfile from './components/EditProfile';
+import NewPost from './components/NewPost';
+import SearchUsers from "./components/SearchUsers";
+import SignIn from './components/SignIn'; // Import SignIn component
+import SignUp from './components/SignUp'; // Import SignUp component
+import Navbar from './components/Navbar'; // Import Navbar component
+import { AuthProvider } from "./context/AuthContext";
+import PrivateRoute from './PrivateRoute'; // Import PrivateRoute
+import { useNavigate, Navigate } from "react-router-dom";
 
 const App = () => {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/signin" />} />
+          {/* Public Routes */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/navbar" element={<Navbar />} />
-          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/new-post" element={<PrivateRoute><NewPost /></PrivateRoute>} />
-          <Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
-          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-          <Route path="/all-posts" element={<PrivateRoute><AllPosts /></PrivateRoute>} />
+
+          <Route path="/" element={<Navigate to="/signin" />} />
+
+
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/new-post"
+            element={
+              <PrivateRoute>
+                <NewPost />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/edit-profile"
+            element={
+              <PrivateRoute>
+                <EditProfile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <PrivateRoute>
+                <SearchUsers />
+              </PrivateRoute>
+            }
+          />
         </Routes>
-        <ToastContainer />
+        <Navbar /> {/* Navbar is always rendered at the bottom */}
       </Router>
     </AuthProvider>
   );

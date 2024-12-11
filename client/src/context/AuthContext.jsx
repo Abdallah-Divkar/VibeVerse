@@ -3,7 +3,9 @@ import { getToken, setToken, removeToken } from '../utils/auth';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -16,6 +18,13 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(storedUser)); // Parse and set the user
     }
   }, []);
+
+  const loadUser = () => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  };
 
   const login = (userData, token) => {
     if (!user) {
@@ -33,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loadUser }}>
       {children}
     </AuthContext.Provider>
   );

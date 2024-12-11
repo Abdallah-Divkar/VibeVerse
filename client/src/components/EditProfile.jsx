@@ -1,90 +1,67 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import { Box, Typography, Button, TextField, Avatar, CircularProgress } from "@mui/material";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { Button, TextField } from "@mui/material";
+import { toast } from "react-toastify"; 
 
-const EditProfile = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState({
-    name: "",
-    username: "",
-    bio: "",
-    profilePic: "",
-  });
-  const [isLoading, setIsLoading] = useState(true);
+const backendURL = import.meta.env.VITE_BACKEND_URL;
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      navigate("/signin");
-      return;
+const EditProfile = ({ currentUsername, currentBio, currentProfilePic, setUserProfile }) => {
+  const [profilePic, setProfilePic] = useState(null);
+  const [username, setUsername] = useState(currentUsername || "");
+  const [bio, setBio] = useState(currentBio || "");
+
+  const handleFileChange = (e) => {
+    setProfilePic(e.target.files[0]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+    if (profilePic) {
+      formData.append("profilePic", profilePic);
+    }
+    if (username !== currentUsername) {
+      formData.append("username", username);
+    }
+    if (bio !== currentBio) {
+      formData.append("bio", bio);
     }
 
-    setUser(JSON.parse(storedUser));
-    setIsLoading(false);
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setUser((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    try {
+      const response = await axios.post(`${backendURL}/api/users/updateProfile`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      toast.success("Profile updated successfully!");
+      console.log("Profile updated:", response.data);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
   };
 
-  const handleSave = () => {
-    localStorage.setItem("user", JSON.stringify(user));
-    alert("Profile updated!");
-  };
-
-  return isLoading ? (
-    <p>Loading...</p>
-  ) : (
-    <div>
-      <h2>Edit Profile</h2>
-      <form>
-      <div>
-          <label>Name</label>
-          <input
-            type="text"
-            name="name"
-            value={user.name}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label>Username</label>
-          <input
-            type="text"
-            name="username"
-            value={user.username}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <label>Bio</label>
-          <textarea
-            name="bio"
-            value={user.bio}
-            onChange={handleChange}
-          ></textarea>
-        </div>
-        <div>
-          <label>Profile Picture URL</label>
-          <input
-            type="text"
-            name="profilePic"
-            value={user.profilePic}
-            onChange={handleChange}
-          />
-        </div>
-        <button type="button" onClick={handleSave}>
-          Save Changes
-        </button>
-      </form>
-    </div>
+  return (
+    <form onSubmit={handleSubmit}>
+      <TextField
+        label="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        fullWidth
+        margin="normal"
+      />
+      <TextField
+        label="Bio"
+        value={bio}
+        onChange={(e) => setBio(e.target.value)}
+        fullWidth
+        margin="normal"
+      />
+      <input type="file" onChange={handleFileChange} />
+      <Button type="submit" variant="contained">
+        Update Profile
+      </Button>
+    </form>
   );
 };
 
