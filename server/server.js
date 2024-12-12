@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware Setup
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
+  origin: ['http://localhost:5173', 'https://vibeverse-229.netlify.app/'], // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

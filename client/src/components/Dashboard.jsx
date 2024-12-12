@@ -7,8 +7,8 @@ import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./Navbar"; // Your Navbar component
 import { useAuth } from "../context/AuthContext"; // Custom AuthContext for user info
 
-const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
-
+//const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+const backendURL = import.meta.env.VITE_BACKEND_URL;
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth(); // Access user data from AuthContext
