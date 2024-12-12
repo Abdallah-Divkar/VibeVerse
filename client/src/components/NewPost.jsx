@@ -48,6 +48,8 @@ const NewPost = () => {
       return;
     }
   
+    setLoading(true); // Set loading to true before making the request
+  
     try {
       const config = {
         headers: {
@@ -59,16 +61,19 @@ const NewPost = () => {
       const response = await axiosInstance.post("/posts/create", formData, config);
       if (response.status === 201) {
         toast.success("Post created successfully!");
-        // Handle successful response
+        setCaption(""); // Reset the caption field
+        setMedia(null); // Reset media
+        setMediaType(null); // Reset media type
       } else {
         toast.error(response.data.message || "Failed to create post.");
       }
     } catch (err) {
       console.error("Error:", err.response?.data || err.message);
       toast.error("An error occurred while creating the post.");
+    } finally {
+      setLoading(false); // Set loading to false after the request is finished
     }
   };
-  
 
   return (
     <Box sx={{ maxWidth: 600, margin: "0 auto", padding: 2 }}>

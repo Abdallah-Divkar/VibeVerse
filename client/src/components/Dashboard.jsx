@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Box, Avatar, Typography, Button, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -7,14 +7,46 @@ import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./Navbar"; // Your Navbar component
 import { useAuth } from "../context/AuthContext"; // Custom AuthContext for user info
 
-const backendURL = import.meta.env.VITE_BACKEND_URL;
+const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth(); // Access user data from AuthContext
-  const [bio, setBio] = useState(user?.bio || "No bio available"); // Default bio if user doesn't have one
+  const [bio, setBio] = useState(user?.bio || "No bio available");
+  const [posts, setPosts] = useState([]); // State for posts
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (user?.bio) setBio(user.bio);
+  }, [user]);
+  
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    console.log("User ID:", userId);
+  }, []);
+  
+
+  // Fetch posts only when user is available and has _id
+  useEffect(() => {
+    console.log("User before fetching posts:", user);
+    if (user?._id) {
+      const fetchPosts = async () => {
+        try {
+          setLoading(true);
+          const response = await axios.get(`${backendURL}/api/posts/users/${user._id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+          setPosts(response.data.posts);
+        } catch (err) {
+          toast.error("Failed to fetch posts.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchPosts();
+    }
+  }, [user]);  
+  
   // Handle bio update
   const handleBioUpdate = async () => {
     if (!bio.trim()) {
@@ -41,7 +73,11 @@ const Dashboard = () => {
   };
 
   if (!user) {
-    return <CircularProgress sx={{ display: 'block', margin: 'auto', marginTop: 5 }} />;
+    return <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 5 }} />;
+  }
+
+  if (loading) {
+    return <CircularProgress sx={{ display: "block", margin: "auto", marginTop: 5 }} />;
   }
 
   return (
@@ -50,7 +86,6 @@ const Dashboard = () => {
       <Typography variant="h4" gutterBottom align="center">
         Welcome, {user.name}!
       </Typography>
-
       <Box sx={{ textAlign: "center" }}>
         {/* Profile Info */}
         <Avatar
@@ -79,35 +114,32 @@ const Dashboard = () => {
           <Typography variant="h5" gutterBottom>
             Your Posts
           </Typography>
-          {user.posts?.length > 0 ? (
-            user.posts.map((post) => (
-              <Box key={post._id} sx={{ marginBottom: 2 }}>
-                <Typography variant="body1">{post.content}</Typography>
-              </Box>
-            ))
+          {loading ? (
+            <CircularProgress sx={{ display: 'block', margin: 'auto', marginTop: 5 }} />
           ) : (
-            <Typography variant="body2">No posts yet. Start creating posts!</Typography>
+            posts.length > 0 ? (
+              posts.map((post) => (
+                <Box key={post._id} sx={{ marginBottom: 2 }}>
+                  <Typography variant="body1">{post.content}</Typography>
+                  {post.photo && <img src={post.photo} alt="Post" style={{ maxWidth: "100%", marginTop: "10px" }} />}
+                  <Box sx={{ display: "flex", alignItems: "center", marginTop: 2 }}>
+                    <Avatar
+                      alt={post.user.username}
+                      src={post.user.profilePic || "/default-avatar.png"}
+                      sx={{ width: 30, height: 30, marginRight: 2 }}
+                    />
+                    <Typography variant="body2">{post.user.username}</Typography>
+                  </Box>
+                </Box>
+              ))
+            ) : (
+              <Typography variant="body2">No posts yet. Start creating posts!</Typography>
+            )
           )}
         </Box>
 
         {/* Bottom Navbar */}
-        <Box sx={{ marginTop: 4 }}>
-          <Button variant="contained" color="primary" sx={{ marginRight: 2 }} onClick={() => navigate("/createpost")}>
-            Create Post
-          </Button>
-          <Button variant="contained" color="secondary" sx={{ marginRight: 2 }} onClick={() => navigate("/profile/edit")}>
-            Edit Profile
-          </Button>
-          <Button variant="contained" color="default" onClick={() => navigate("/users")}>
-            View Users
-          </Button>
-        </Box>
-
-        <Box sx={{ marginTop: 3 }}>
-          <Button variant="contained" color="error" onClick={handleLogout}>
-            Logout
-          </Button>
-        </Box>
+        {/* Add your bottom navigation bar here */}
       </Box>
     </Container>
   );

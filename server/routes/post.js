@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const cloudinary = require('../config/config');
 const multer = require('multer');
+const User = require("../models/User");
 const Post = require('../models/Post');
 const postCtrl = require("../controllers/post.controller");
 const upload = require("../middleware/upload");
@@ -41,20 +42,35 @@ router.delete('/delete/:postId', requireAuth, postCtrl.deletePost);
 // GET all posts
 router.get('/', postCtrl.getAllPosts);
 
-// GET posts by a specific user (authentication can be added if necessary)
-router.get('/user/:userId', requireAuth, async (req, res) => { // Added requireAuth here
-  try {
-    const userId = req.params.userId;
-    const posts = await Post.find({ user: userId }).populate('user', 'username');
+// In user.routes.js or a separate posts.routes.js
 
-    if (!posts || posts.length === 0) {
-      return res.status(404).json({ success: false, message: 'No posts found for this user' });
+// Fetch posts by username
+router.get('/posts/users/:username', async (req, res) => {
+  const { username } = req.params;
+  
+  try {
+    const posts = await Post.find({ 'user.username': username })  // Assuming you have a `username` field in the `User` collection
+      .populate('user', 'username profilePic');  // Populate user data, adjust this as needed
+
+    if (!posts) {
+      return res.status(404).json({ message: 'No posts found for this user.' });
     }
 
-    res.status(200).json({ success: true, posts });
+    res.status(200).json({ posts });
   } catch (error) {
-    console.error('Error fetching posts by user:', error);
-    res.status(500).json({ success: false, message: 'Error fetching posts by user' });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch posts' });
+  }
+});
+
+
+// GET posts by a specific user (authentication can be added if necessary)
+router.get('/users/:userId', async (req, res) => { // Added requireAuth here
+  try {
+    const posts = await Post.find({ user: req.params.userId }); // Filter posts by userId
+    res.json({ posts });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching posts" });
   }
 });
 

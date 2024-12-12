@@ -8,7 +8,7 @@ const {
   getCommentsByPost,
   deleteComment
 } = require('../controllers/comment.controller');
-const { requireAuth } = require('@clerk/express');
+const { requireAuth } = require("../middleware/requireAuth");
 
 // Create a comment
 router.post('/', requireAuth, createComment);

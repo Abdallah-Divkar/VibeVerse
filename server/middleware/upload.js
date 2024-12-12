@@ -1,22 +1,19 @@
-// middleware/upload.js
 const multer = require('multer');
+const cloudinary = require('../config/config');  // Import the cloudinary instance correctly
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('../config/config'); // Assuming cloudinary is exported from your config file
 
-// Configure Cloudinary storage
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary.cloudinary, // Cloudinary instance from the config file
+  cloudinary: cloudinary,  // Pass the cloudinary instance here
   params: {
-    folder: 'uploads', // Specify the folder in Cloudinary
-    allowed_formats: ['jpeg', 'jpg', 'png'], // Allowed file types
-    public_id: (req, file) => `${Date.now()}-${file.originalname}`, // Unique file name
+    folder: 'vibeverse_posts',  // Your Cloudinary folder
+    allowed_formats: ['jpeg', 'jpg', 'png'],
+    public_id: (req, file) => `${Date.now()}-${file.originalname}`, // Unique public_id
   },
 });
 
-// Multer upload middleware
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/;
     const mimetype = filetypes.test(file.mimetype);
@@ -27,6 +24,6 @@ const upload = multer({
     }
     cb(new Error('Only .jpg, .jpeg, and .png files are allowed.'));
   },
-}).single('profilePic'); // Adjust the field name if necessary (e.g., 'profilePic')
+}).single('photo');  // Adjust according to your form field
 
 module.exports = upload;

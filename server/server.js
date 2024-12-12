@@ -23,11 +23,6 @@ app.use(bodyParser.json());
 app.use(express.json()); // Parse incoming requests with JSON payloads
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
 
-// Handle preflight requests (OPTIONS) explicitly
-//app.options('*', cors(corsOptions)); // Allow preflight requests for all routes
-
-//app.use(withAuth());  // Ensure authentication middleware is applied globally
-
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -39,18 +34,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", cmtRoutes);
 app.use("/api/auth", authRoutes);
-
-// Example: Protect specific routes with Clerk middleware
-/*app.use("/api/protected", requireAuth(), (req, res) => {
-  console.log("Authenticated user:", req.auth);  // Log the req.auth object
-  res.send(`Hello, authenticated user with ID: ${req.auth.userId}`);
-});*/
-
-/*app.get("/api/users/currentUser", requireAuth(), (req, res) => {
-  const currentUser = req.auth;  // Access current user information
-  console.log("Current User:", currentUser);  // Log the user data
-  res.json(currentUser);  // Return the user data as JSON
-});*/
 
 // Test route
 app.get("/", (req, res) => {

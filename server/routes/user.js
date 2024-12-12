@@ -1,22 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const userCtrl = require("../controllers/user.controller");
-const requireAuth = require("../middleware/requireAuth");
+const { getUserProfile } = userCtrl;
+const { requireAuth } = require("../middleware/requireAuth");
 const upload = require("../middleware/upload");
 const User = require('../models/User');
-const { getUserProfile } = require("../controllers/user.controller");
 
 // User Profile Routes
 router.get("/me", requireAuth, getUserProfile);
-router.get("/profile/:userId", requireAuth, getUserProfile); // Get specific user's profile by userId
-//router.get("/:username", getUserProfile); // Get user by username
-router.get("/currentUser", requireAuth, async (req, res) => {
+router.get("/:username", getUserProfile);
+router.get("/profile/:userId", requireAuth, getUserProfile);
+router.get('/currentUser', requireAuth, async (req, res) => {
   try {
     const userId = req.auth.userId;
     if (!userId) {
       return res.status(401).json({ message: "User not authenticated" });
     }
+    console.log("User ID:", req.auth.userId);
     const user = await User.findById(userId).select('-password');
+    console.log("User Found:", user);
+    
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

@@ -2,6 +2,25 @@ const Post = require('../models/Post'); // Make sure to import your Post model
 
 // Create a new post
 const createPost = async (req, res) => {
+  try {
+    const { content } = req.body; // Caption for the post
+    const { path } = req.file; // Path of the uploaded file (image/video)
+
+    // Assuming you're storing the file URL in the 'photo' field of the post
+    const newPost = await Post.create({
+      content,
+      photo: path, // Store the file path (or Cloudinary URL if uploaded there)
+      userId: req.user.id, // Assuming the post is tied to a user
+    });
+
+    res.status(201).json({ message: "Post created successfully!", post: newPost });
+  } catch (err) {
+    res.status(500).json({ message: "Error creating post", error: err.message });
+  }
+};
+
+
+/*const createPost = async (req, res) => {
   const { title, content, image } = req.body;
   try {
     const newPost = new Post({ title, content, image });
@@ -9,41 +28,6 @@ const createPost = async (req, res) => {
     res.status(201).json(newPost);
   } catch (error) {
     res.status(500).json({ message: 'Error creating post' });
-  }
-};
-
-/*const createPost = async (req, res) => {
-  try {
-    console.log('Request body:', req.body);  // Debug log
-    console.log('Uploaded file:', req.file);  // Debug log
-
-    const newPost = new Post({
-      user: req.user.id,  // Set user to the authenticated user's ID
-      content: req.body.content,  // Content from the request body
-      photo: req.file ? req.file.path : '',  // File path if photo is uploaded
-    });
-
-    const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
-  } catch (error) {
-    console.error('Error creating post:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-const createPost = async (req, res) => {
-  try {
-    const newPost = new Post({
-      user: req.user.id, // Assuming user info is attached to the request object by authentication middleware
-      content: req.body.content, // Assuming content is passed in the request body
-      // You can add other fields like images, timestamps, etc.
-    });
-
-    const savedPost = await newPost.save();
-    res.status(201).json(savedPost);
-  } catch (error) {
-    console.error('Error creating post:', error);
-    res.status(500).json({ message: 'Server error' });
   }
 };*/
 

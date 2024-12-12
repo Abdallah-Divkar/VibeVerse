@@ -34,9 +34,10 @@ const SignIn = () => {
         // Store token and user in localStorage
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('userId', response.data.user.id);
+
         const token = localStorage.getItem('authToken', response.data.token);
         console.log("Retrieved Token:", token);
-  
         // Update context
         login(response.data.user, response.data.token); // Use login function from context
   

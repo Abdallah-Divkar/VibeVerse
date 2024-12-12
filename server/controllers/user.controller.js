@@ -1,21 +1,38 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const cloudinary = require('../config/config').cloudinary;
-const Post = require('../models/Post');
+//const Post = require('../models/Post');
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongoose').Types;
 
 const getUserProfile = async (req, res) => {
   try {
-    const { username } = req.params;
-    const user = await User.findOne({ username });
+    const userId = req.auth.userId || req.params.userId || req.params.username;
+    
+    // Find the user by either userId or username
+    const user = await User.findById(userId).select('-password'); // Exclude password field
+    // Alternatively, if you're looking by username
+    // const user = await User.findOne({ username: req.params.username }).select('-password');
+    
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json(user);
+
+    // Send the user object, including name, username, and other details
+    res.status(200).json({
+      user: {
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        profilePic: user.profilePic,
+        followers: user.followers,
+        following: user.following,
+        bio: user.bio,
+      }
+    });
   } catch (error) {
-    console.error("Error retrieving user profile:", error);
-    res.status(500).json({ message: "Error retrieving user profile", error });
+    console.error('Error retrieving user profile:', error);
+    res.status(500).json({ message: 'Error retrieving user profile', error });
   }
 };
 
@@ -148,6 +165,28 @@ const read = async (req, res) => {
   }
 };
 
+const remove = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (req.user._id.toString() !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own profile' });
+    }
+
+    // Find the user and delete them
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    return res.status(200).json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    return res.status(500).json({ error: 'Could not delete user' });
+  }
+};
+
+
 const profile = async (req, res) => {
   try {
     const { userId, username } = req.params;
@@ -275,6 +314,7 @@ module.exports = {
   list,
   read,
   update,
+  remove,
   follow,
   unfollow,
   profile,
