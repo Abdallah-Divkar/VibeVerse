@@ -29,7 +29,7 @@ const SignIn = () => {
     e.preventDefault();
   
     try {
-      const response = await axiosInstance.post(`/auth/signin`, credentials);
+      const response = await axiosInstance.post(`${backendURL}/auth/signin`, credentials);
       if (response.data.success) {
         // Store token and user in localStorage
         localStorage.setItem('authToken', response.data.token);
