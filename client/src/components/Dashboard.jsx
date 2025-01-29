@@ -49,12 +49,22 @@ const Dashboard = () => {
   
   // Handle bio update
   const handleBioUpdate = async () => {
+    if (!user?._id) {
+      toast.error("User is not authenticated.");
+      return;
+    }
+  
     if (!bio.trim()) {
       toast.error("Bio cannot be empty.");
       return;
     }
-
+  
     const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("No authentication token found.");
+      return;
+    }
+  
     try {
       await axios.put(
         `${backendURL}/api/users/${user._id}`,
@@ -64,8 +74,10 @@ const Dashboard = () => {
       toast.success("Bio updated successfully!");
     } catch (err) {
       toast.error("Failed to update bio.");
+      console.error("Error updating bio:", err);
     }
   };
+  
 
   const handleLogout = () => {
     localStorage.removeItem("token");

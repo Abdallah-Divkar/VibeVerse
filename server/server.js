@@ -13,11 +13,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware Setup
-app.use(cors({
+/*app.use(cors({
   origin: ['http://localhost:5173', 'https://vibeverse-229.netlify.app/'], // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+}));*/
+
+const corsOptions = {
+  origin: ['http://localhost:5173', 'https://vibeverse-229.netlify.app'], // Frontend origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Headers sent by frontend
+  credentials: true // Enable cookies and credentials if needed
+};
+
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use(express.json()); // Parse incoming requests with JSON payloads

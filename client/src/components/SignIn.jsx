@@ -6,7 +6,8 @@ import "../Signin.css";
 import { useAuth } from "../context/AuthContext";
 import { Typography, Button } from "@mui/material"; // Import Typography and Button
 
-const backendURL = import.meta.env.VITE_BACKEND_URL;
+const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
+//const backendURL = import.meta.env.REACT_APP_BACKEND_URL;
 
 const SignIn = () => {
   const [credentials, setCredentials] = useState({
@@ -25,11 +26,22 @@ const SignIn = () => {
     }));
   };
 
+  const axiosInstance = axios.create({
+    //baseURL: import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL,
+    baseURL: import.meta.env.REACT_APP_BACKEND_URL,
+
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
   
     try {
-      const response = await axiosInstance.post(`${backendURL}/auth/signin`, credentials);
+      //const response = await axiosInstance.post(`${backendURL}/api/auth/signin`, credentials);
+      const response = await axiosInstance.post(`http://localhost:3000/api/auth/signin`, credentials);
+
       if (response.data.success) {
         // Store token and user in localStorage
         localStorage.setItem('authToken', response.data.token);
